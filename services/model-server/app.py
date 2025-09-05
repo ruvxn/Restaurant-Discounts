@@ -179,7 +179,7 @@ def build_feature_frame(req: GenerateReq, hours: list[int]) -> pd.DataFrame:
     df = ensure_required_columns(df)    
     return df  
 
-def map_walkins_to_discount(walkins: int, total_seats: int = 60) -> int:
+def map_walkins_to_discount(walkins: int, total_seats: int = 80) -> int:
     # Simple occupancy-based mapping. Tune as needed.
     occ = 0 if total_seats <= 0 else min(1.0, walkins / float(total_seats))
     if occ >= 0.80: return 5
