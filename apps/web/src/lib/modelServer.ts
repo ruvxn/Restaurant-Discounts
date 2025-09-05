@@ -1,3 +1,5 @@
+
+// adapter fo rpython inferences since nextjs wont know about pkl files and sklearn.
 export type GenerateReq = {
     restaurant_slug: string;
     date: string;
