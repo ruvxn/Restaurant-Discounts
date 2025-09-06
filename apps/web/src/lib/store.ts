@@ -1,28 +1,9 @@
-// simple in-memory store for now.
-// after prisma is set teh same API route can be used for it.
+// apps/web/src/lib/store.ts
+// Helpers only — persistence is now in Prisma/Postgres.
 
-type Slot = { time: string; discount: number };
+export type Slot = { time: string; discount: number };
 
-type GlobalStore = { accepted: Record<string, Slot[]> };
-const g = globalThis as unknown as { __discountStore?: GlobalStore };
-if (!g.__discountStore) g.__discountStore = { accepted: {} };
-const store = g.__discountStore;
-
-export function saveAccepted(restaurantId: string, date: string, rows: Slot[]) {
-  store.accepted[`${restaurantId}:${date}`] = rows;
-}
-
-export function getAccepted(restaurantId: string, date: string): Slot[] | null {
-  return store.accepted[`${restaurantId}:${date}`] ?? null;
-}
-
-export function mergeWithDefaults(saved: Slot[] | null, defaults: Slot[]): Slot[] {
-  if (!saved || saved.length === 0) return defaults;
-  const map = new Map(defaults.map(d => [d.time, d.discount]));
-  for (const s of saved) map.set(s.time, s.discount);
-  return defaults.map(d => ({ time: d.time, discount: map.get(d.time)! }));
-}
-
+// Default discount grid used when no saved rows exist.
 export const defaultHours: Slot[] = [
   { time: "08:00", discount: 15 },
   { time: "09:00", discount: 20 },
@@ -40,3 +21,14 @@ export const defaultHours: Slot[] = [
   { time: "21:00", discount: 5  },
   { time: "22:00", discount: 10 },
 ];
+
+// Overlay any saved rows onto the defaults, keeping unspecified slots as defaults.
+export function mergeWithDefaults(
+  saved: Array<{ time: string; discount: number }> | null | undefined,
+  defaults: Array<{ time: string; discount: number }> = defaultHours
+): Slot[] {
+  if (!saved || saved.length === 0) return defaults;
+  const map = new Map(defaults.map(d => [d.time, d.discount]));
+  for (const s of saved) map.set(s.time, s.discount);
+  return defaults.map(d => ({ time: d.time, discount: map.get(d.time)! }));
+}
