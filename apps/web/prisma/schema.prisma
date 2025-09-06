@@ -1,0 +1,48 @@
+// apps/web/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id         Int    @id @default(autoincrement())
+  slug       String @unique
+  name       String
+  openHour   Int // 0–23
+  closeHour  Int // 0–23
+  totalSeats Int
+
+  // Optional metadata (aligns with your plan; safe to leave null)
+  googleRating Float?
+  averageBill  Float?
+  distanceKm   Float?
+  category     String?
+
+  acceptedDiscounts AcceptedDiscount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model AcceptedDiscount {
+  id           Int      @id @default(autoincrement())
+  restaurantId Int
+  date         DateTime // store UTC midnight for that day (YYYY-MM-DDT00:00:00Z)
+  time         String // "HH:MM"
+  discount     Int // 0–100 (%)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([restaurantId, date, time])
+  @@index([restaurantId, date])
+}
