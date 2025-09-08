@@ -1,0 +1,124 @@
+// apps/web/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id         Int    @id @default(autoincrement())
+  slug       String @unique
+  name       String
+  openHour   Int // 0–23
+  closeHour  Int // 0–23
+  totalSeats Int
+
+  // Optional metadata (aligns with your plan; safe to leave null)
+  googleRating Float?
+  averageBill  Float?
+  distanceKm   Float?
+  category     String?
+
+  acceptedDiscounts AcceptedDiscount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+/// Back-reference to admins who manage this restaurant (no DB column created;
+  /// it’s derived from Admin.restaurantId)
+  admins Admin[]
+
+model AcceptedDiscount {
+  id           Int      @id @default(autoincrement())
+  restaurantId Int
+  date         DateTime // store UTC midnight for that day (YYYY-MM-DDT00:00:00Z)
+  time         String // "HH:MM"
+  discount     Int // 0–100 (%)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([restaurantId, date, time])
+  @@index([restaurantId, date])
+}
+
+/// ---------------------------------------------------------------------------
+/// AUTH & PEOPLE LAYER
+/// These models let your teammate wire up authentication, and give you
+/// customer profiles with interests + restaurant admins.
+/// ---------------------------------------------------------------------------
+
+/// Role for the Account. We keep it very small on purpose.
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+/// A login identity. One row per human (or service).
+/// - `email` is unique so we can find the account quickly.
+/// - `passwordHash` is optional for now: if you later use OAuth-only,
+///   you won’t need it; if you use email+password, you can make it required.
+/// - `role` tells your app if this account acts as a CUSTOMER or an ADMIN.
+model Account {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String?   // optional now; make required later if using password login
+  role         Role      @default(CUSTOMER)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // 1:1 links to either a Customer or an Admin profile.
+  // (Only one of these is expected to exist per account.)
+  customer     Customer?
+  admin        Admin?
+}
+
+/// A booker profile (what your frontend will use when a user makes a booking).
+/// - `interests` is a Postgres text[] array; default is an empty array.
+/// - We keep this bare-bones per your request.
+model Customer {
+  id         Int       @id @default(autoincrement())
+  accountId  Int       @unique        // 1:1 with Account
+  name       String
+
+  /// Topics the customer cares about. We’ll surface these when another
+  /// user hovers a table (“people here like: cats, music”).
+  interests  String[]  @default([])
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // NOTE: We will add a relation to Booking later in a separate step to avoid
+  // forward references during migration.
+}
+
+/// An admin for a specific restaurant (manager, staff, etc.).
+/// - Each admin is tied to exactly one restaurant.
+/// - They sign in via their Account with role ADMIN.
+model Admin {
+  id           Int        @id @default(autoincrement())
+  accountId    Int        @unique
+  restaurantId Int
+  name         String
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  account      Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
+
