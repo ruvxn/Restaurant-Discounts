@@ -31,6 +31,12 @@ model Restaurant {
 
   tables DiningTable[]
 
+  menuItems MenuItem[]
+
+  bookings Booking[]
+
+
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -102,6 +108,8 @@ model Customer {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
+  bookings Booking[]
+
   account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   // NOTE: We will add a relation to Booking later in a separate step to avoid
@@ -148,10 +156,117 @@ model DiningTable {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
+  bookings Booking[]
+
+
   /// A single restaurant cannot reuse the same label on two tables.
   @@unique([restaurantId, label])
 
   /// Helpful for filtering all tables by restaurant
   @@index([restaurantId])
 }
+
+/// ---------------------------------------------------------------------------
+/// MENU LAYER
+/// Each restaurant can list menu items. Bookings may optionally preselect
+/// items via BookingItem (added now, linked once Booking exists).
+/// ---------------------------------------------------------------------------
+model MenuItem {
+  id           Int        @id @default(autoincrement())
+
+  /// Which restaurant this menu item belongs to
+  restaurantId Int
+
+  name         String
+  description  String?
+  priceCents   Int        // store money as integer cents to avoid floats
+  isSetMenu    Boolean    @default(false) // true for fixed-price “set menus”
+  isActive     Boolean    @default(true)  // simple toggle without deleting
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  // Backref to BookingItem will be usable after we add Booking
+  bookingItems BookingItem[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([restaurantId, isActive])
+}
+
+model BookingItem {
+  id          Int       @id @default(autoincrement())
+
+  /// Link to the parent booking
+  bookingId   Int
+
+  /// Which item was selected for that booking
+  menuItemId  Int
+
+  qty         Int       @default(1)
+
+  // Relations
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([bookingId])
+  @@index([menuItemId])
+}
+
+
+/// ---------------------------------------------------------------------------
+/// BOOKING LAYER
+/// 1-hour bookings, start only on the hour. A booking uses seats on ONE table.
+/// Multiple bookings can share a table if seatingCap is not exceeded.
+/// Seat arithmetic is enforced in application logic (transaction).
+/// ---------------------------------------------------------------------------
+
+enum BookingStatus {
+  BOOKED     // set when created
+  COMPLETED  // set after the hour passes (cron or job)
+}
+
+model Booking {
+  id           Int            @id @default(autoincrement())
+
+  /// Foreign keys
+  restaurantId Int
+  tableId      Int
+  customerId   Int
+
+  /// People count for this booking (must be > 0 and <= remaining seats at the chosen table)
+  partySize    Int
+
+  /// 1-hour window:
+  /// - startsAt must be on the hour (00 minutes) in app validation
+  /// - endsAt should equal startsAt + 1 hour (set by app when creating)
+  startsAt     DateTime
+  endsAt       DateTime
+
+  status       BookingStatus  @default(BOOKED)
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  /// Relations
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table        DiningTable    @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  customer     Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  /// Line items (optional preselected menu)
+  items        BookingItem[]
+
+  /// Helpful indexes for availability lookups
+  @@index([restaurantId, startsAt])
+  @@index([tableId, startsAt])
+  @@index([customerId, startsAt])
+
+  /// Optional guard: avoid duplicate bookings by the SAME customer for the SAME table & hour.
+  /// (Seat capacity is still enforced in app logic.)
+  @@unique([customerId, tableId, startsAt])
+}
+
 
