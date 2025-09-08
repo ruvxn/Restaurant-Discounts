@@ -25,15 +25,17 @@ model Restaurant {
 
   acceptedDiscounts AcceptedDiscount[]
 
+  /// Back-reference to admins who manage this restaurant (no DB column created;
+  /// it’s derived from Admin.restaurantId)
+  admins Admin[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([slug])
 }
 
-/// Back-reference to admins who manage this restaurant (no DB column created;
-  /// it’s derived from Admin.restaurantId)
-  admins Admin[]
+
 
 model AcceptedDiscount {
   id           Int      @id @default(autoincrement())
@@ -121,4 +123,5 @@ model Admin {
 
   @@index([restaurantId])
 }
+
 
