@@ -29,6 +29,8 @@ model Restaurant {
   /// it’s derived from Admin.restaurantId)
   admins Admin[]
 
+  tables DiningTable[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -124,4 +126,32 @@ model Admin {
   @@index([restaurantId])
 }
 
+/// ---------------------------------------------------------------------------
+/// SEATING LAYER
+/// Physical tables inside a restaurant. Bookings will attach to these.
+/// ---------------------------------------------------------------------------
+model DiningTable {
+  id           Int        @id @default(autoincrement())
+
+  /// Which restaurant this table belongs to
+  restaurantId Int
+
+  /// Human-visible label shown in the UI (e.g., "T1", "Booth-3", "Window-2")
+  label        String
+
+  /// Total seats at this table
+  seatingCap   Int
+
+  /// Relation back to Restaurant
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  /// A single restaurant cannot reuse the same label on two tables.
+  @@unique([restaurantId, label])
+
+  /// Helpful for filtering all tables by restaurant
+  @@index([restaurantId])
+}
 
