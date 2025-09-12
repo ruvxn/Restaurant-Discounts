@@ -1,0 +1,393 @@
+/* Base layout */
+.restaurant-info-page {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  align-items: flex-start;
+  background: #f9f9fb;
+  box-sizing: border-box;
+}
+
+/* Left column */
+.restaurant-card-left {
+  width: 320px;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 1rem;
+  box-sizing: border-box;
+}
+
+.restaurant-image-large {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.restaurant-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+  color: #181818;
+}
+
+.restaurant-cuisine {
+  color: #9b009b;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.restaurant-hours-today {
+  color: #444;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+/* Discounts */
+.available-discounts {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+}
+
+.available-discounts h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.discount-combobox {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.combobox-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.dropdown-display {
+  width: 100%;
+  max-width: 240px;
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  text-align: center;
+  cursor: pointer;
+  color: #1f1f1f;
+}
+
+.time-button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f1f1f;
+}
+
+.time-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  z-index: 500;
+  max-height: 240px;
+  overflow-y: auto;
+  color: #222;
+  box-sizing: border-box;
+}
+
+.time-option {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #222;
+}
+.time-option:hover {
+  background: #f5f5f7;
+}
+.time-option.selected {
+  background: #eef2ff;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Red percent box */
+.discount-percent-badge {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #ffe5e5;
+  color: #d32f2f;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.3px;
+}
+
+/* Menu button */
+.booking-next-button {
+  background-color: #ff512f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Right column */
+.restaurant-content-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+
+.info-section {
+  background: #fff;
+  padding: 1.4rem 1.6rem;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  color: #181818;
+}
+
+/* Menu list */
+.menu-list,
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #444;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.menu-name {
+  font-weight: 500;
+  color: #181818;
+}
+
+.menu-price-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.discounted-price {
+  font-weight: 700;
+  color: #ff512f;
+  font-size: 1rem;
+}
+
+.original-price {
+  text-decoration: line-through;
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 0.1rem;
+}
+
+/* Seating plan */
+.seating-floor {
+  position: relative;
+  height: 340px;
+  border-radius: 14px;
+  border: 1px dashed #e2e2e8;
+  background:
+    radial-gradient(1200px 200px at -10% -10%, rgba(0,0,0,0.03), transparent 60%),
+    radial-gradient(800px 200px at 110% 110%, rgba(0,0,0,0.03), transparent 60%),
+    #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.seat-item {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+}
+
+.seat-table.available {
+  background: #e9f7ef;
+  color: #0f5132;
+  border: 1px solid #b9e7cb;
+}
+.seat-table.occupied {
+  background: #ececec;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  opacity: 0.9;
+}
+.seat-table:hover {
+  filter: brightness(0.97);
+}
+.seat-table:active {
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+.entrance {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+.cashier {
+  background: #fde68a;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.seat-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  width: min(92vw, 360px);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  padding: 1rem 1.2rem;
+}
+.modal-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #181818;
+}
+.modal-body p {
+  margin: 0.35rem 0;
+  color: #333;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.8rem;
+}
+.btn {
+  background: #efefef;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #e5e5e5;
+}
+
+/* About text visibility */
+.about-text {
+  color: #333;
+  white-space: pre-wrap; /* preserve newlines if provided */
+}
+
+/* Small screens */
+@media (max-width: 900px) {
+  .restaurant-info-page {
+    flex-direction: column;
+  }
+  .restaurant-card-left {
+    width: 100%;
+    position: static;
+  }
+}
+
+/* Opening hours visibility fixes */
+.info-section .about-hours,
+.restaurant-hours-today {
+  color: #1f1f1f !important;   /* force readable dark text */
+}
+
+.info-section .about-hours strong {
+  color: inherit;               /* keep label same color */
+}
+/* Opening hours visibility and layout in About */
+.about-hours-block {
+  margin-top: 0.5rem;
+}
+.about-hours-title {
+  margin: 0 0 0.35rem 0;
+  font-weight: 700;
+  color: #1f1f1f !important; /* ensure readable in all themes */
+}
+.about-hours-list {
+  list-style: none;
+  margin: 0;
+  padding-left: 1rem; /* slight indent like your example */
+  color: #1f1f1f !important; /* force visible text */
+}
+.about-hours-list li {
+  margin: 0.2rem 0;
+}
+.about-hours-list .day {
+  font-weight: 600;
+  color: #1f1f1f !important;
+}
+.about-hours-list .hours {
+  color: #1f1f1f !important;
+}
+
+/* If you still see low-contrast text due to global styles, keep this stronger override */
+.info-section .about-hours-title,
+.info-section .about-hours-list,
+.info-section .about-hours-list .day,
+.info-section .about-hours-list .hours {
+  color: #1f1f1f !important;
+}
