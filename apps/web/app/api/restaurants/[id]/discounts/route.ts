@@ -1,6 +1,7 @@
 // apps/web/app/api/restaurants/[id]/discounts/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { defaultHours, mergeWithDefaults } from "@/src/lib/store";
+<<<<<<< Updated upstream
 import {
   getAccepted,
   saveAccepted,
@@ -14,14 +15,44 @@ function getDate(req: NextRequest): string {
   return d ?? (typeof todayYMD === "function" ? todayYMD() : new Date().toISOString().slice(0, 10));
 }
 
+=======
+import { todayYMD } from "@/src/lib/time";
+import { getAccepted, saveAccepted } from "@/src/lib/discountsRepo";
+
+export const runtime = "nodejs"; // ensure Node (Prisma won't run on Edge)
+
+// GET /api/restaurants/:id/discounts?date=YYYY-MM-DD
+>>>>>>> Stashed changes
 export async function GET(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
+<<<<<<< Updated upstream
   const { id } = await ctx.params;
   const idNum = Number(id);
   if (!Number.isInteger(idNum)) {
     return NextResponse.json({ error: "Invalid restaurant id" }, { status: 400 });
+=======
+  const { id } = await ctx.params; // ✅ Next 15 App Router: await params
+  const date = new URL(req.url).searchParams.get("date") ?? todayYMD();
+
+  const saved = await getAccepted(Number(id), date); // ✅ DB-backed
+  const rows = mergeWithDefaults(saved, defaultHours);
+  return NextResponse.json({ discounts: rows }, { status: 200 });
+}
+
+// POST /api/restaurants/:id/discounts?date=YYYY-MM-DD
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  const { id } = await ctx.params; // ✅ await
+  const date = new URL(req.url).searchParams.get("date") ?? todayYMD();
+
+  const body = await req.json();
+  if (!Array.isArray(body)) {
+    return NextResponse.json({ error: "Body must be an array" }, { status: 400 });
+>>>>>>> Stashed changes
   }
 
   const restaurant = await getRestaurantById(idNum);
@@ -29,6 +60,7 @@ export async function GET(
     return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
   }
 
+<<<<<<< Updated upstream
   const date = getDate(req);
   const saved = await getAccepted(idNum, date);
   const grid = mergeWithDefaults(saved, defaultHours); // unchanged contract
@@ -72,4 +104,8 @@ export async function POST(
   const saved = await getAccepted(idNum, date);
   const grid = mergeWithDefaults(saved, defaultHours);
   return NextResponse.json(grid);
+=======
+  const saved = await saveAccepted(Number(id), date, normalized); // ✅ DB-backed
+  return NextResponse.json({ ok: true, saved }, { status: 200 });
+>>>>>>> Stashed changes
 }

@@ -1,5 +1,6 @@
 // apps/web/app/api/admin/refresh/route.ts
 import { NextRequest, NextResponse } from "next/server";
+<<<<<<< Updated upstream
 import { prisma } from "@/src/lib/db";
 import { saveAccepted, type AcceptedRow } from "@/src/lib/discountsRepo";
 import { todayYMD } from "@/src/lib/time";
@@ -46,6 +47,85 @@ export async function POST(req: NextRequest) {
   if (idParam && !Number.isInteger(idNum)) {
     return NextResponse.json({ error: "Invalid id parameter" }, { status: 400 });
   }
+=======
+import { PrismaClient } from "@prisma/client";
+import { saveAccepted } from "@/src/lib/discountsRepo";
+
+export const runtime = "nodejs"; // Prisma requires Node runtime
+
+const prisma = new PrismaClient();
+const MODEL_URL = process.env.MODEL_SERVER_URL ?? "http://localhost:8000";
+const CRON_SECRET = process.env.CRON_SECRET ?? "dev-secret";
+
+// POST /api/admin/refresh?date=YYYY-MM-DD
+export async function POST(req: NextRequest) {
+  // 1) simple auth
+  const secret = req.headers.get("x-cron-secret");
+  if (!secret || secret !== CRON_SECRET) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // 2) date param
+  const date = new URL(req.url).searchParams.get("date") || "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: "date must be YYYY-MM-DD" }, { status: 400 });
+  }
+
+  // 3) load restaurants
+  const restaurants = await prisma.restaurant.findMany({
+    select: { id: true, slug: true, openHour: true, closeHour: true },
+    orderBy: { id: "asc" },
+  });
+
+  // 4) per-restaurant: call model server, upsert rows
+  const settled = await Promise.allSettled(
+    restaurants.map(async (r) => {
+      // build opening hours [openHour .. closeHour-1]
+      const opening_hours = Array.from({ length: Math.max(0, r.closeHour - r.openHour) }, (_, i) => ({
+        hour: r.openHour + i,
+      }));
+
+      const resp = await fetch(`${MODEL_URL}/v1/generate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          restaurant_slug: r.slug,
+          date,
+          opening_hours,
+        }),
+      });
+      if (!resp.ok) {
+        throw new Error(`model server ${resp.status} ${resp.statusText}`);
+      }
+      const data = await resp.json() as {
+        discounts?: { hour: number; discountPct: number }[];
+        model_version?: string;
+      };
+
+      // normalize for DB
+      const rows =
+        (data.discounts ?? []).map((d) => ({
+          time: String(d.hour).padStart(2, "0") + ":00",
+          discount: Math.round(Number(d.discountPct ?? 0)),
+        })) ?? [];
+
+      const saved = await saveAccepted(r.id, date, rows);
+      return {
+        ok: true,
+        restaurant: r.slug,
+        saved,
+        model_version: data.model_version ?? null,
+      };
+    })
+  );
+
+  // 5) shape response (include failures per-restaurant)
+  const results = settled.map((res, i) =>
+    res.status === "fulfilled"
+      ? res.value
+      : { ok: false, restaurant: restaurants[i].slug, error: String(res.reason) }
+  );
+>>>>>>> Stashed changes
 
   // Pick target restaurants
   const restaurants = await prisma.restaurant.findMany({

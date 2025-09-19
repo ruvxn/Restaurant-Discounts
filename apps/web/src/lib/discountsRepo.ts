@@ -1,4 +1,5 @@
 // apps/web/src/lib/discountsRepo.ts
+<<<<<<< Updated upstream
 import { prisma } from './db';
 
 export type AcceptedRow = { time: string; discount: number };
@@ -57,4 +58,45 @@ export async function saveAccepted(
       }),
     ),
   );
+=======
+import { PrismaClient } from "@prisma/client";
+import { ymdToUtcMidnight } from "./time";
+
+const prisma = new PrismaClient();
+
+/** Read saved rows for a day (exact UTC midnight literal) */
+export async function getAccepted(restaurantId: number, ymd: string) {
+  const day = ymdToUtcMidnight(ymd);
+  return prisma.acceptedDiscount.findMany({
+    where: { restaurantId, date: day },
+    orderBy: { time: "asc" },
+    select: { time: true, discount: true },
+  });
+}
+
+/** Upsert many rows for that day; returns count saved/updated */
+export async function saveAccepted(
+  restaurantId: number,
+  ymd: string,
+  rows: { time: string; discount: number }[]
+) {
+  const day = ymdToUtcMidnight(ymd);
+  let saved = 0;
+  await prisma.$transaction(async (tx) => {
+    for (const r of rows) {
+      const time = String(r.time ?? "");
+      const discount = Number(r.discount ?? 0);
+      if (!time.match(/^\d{2}:\d{2}$/)) continue; // guard
+      await tx.acceptedDiscount.upsert({
+        where: {
+          restaurantId_date_time: { restaurantId, date: day, time },
+        },
+        update: { discount },
+        create: { restaurantId, date: day, time, discount },
+      });
+      saved++;
+    }
+  });
+  return saved;
+>>>>>>> Stashed changes
 }
