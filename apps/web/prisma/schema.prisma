@@ -1,0 +1,272 @@
+// apps/web/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id         Int    @id @default(autoincrement())
+  slug       String @unique
+  name       String
+  openHour   Int // 0–23
+  closeHour  Int // 0–23
+  totalSeats Int
+
+  // Optional metadata (aligns with your plan; safe to leave null)
+  googleRating Float?
+  averageBill  Float?
+  distanceKm   Float?
+  category     String?
+
+  acceptedDiscounts AcceptedDiscount[]
+
+  /// Back-reference to admins who manage this restaurant (no DB column created;
+  /// it’s derived from Admin.restaurantId)
+  admins Admin[]
+
+  tables DiningTable[]
+
+  menuItems MenuItem[]
+
+  bookings Booking[]
+
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+
+
+model AcceptedDiscount {
+  id           Int      @id @default(autoincrement())
+  restaurantId Int
+  date         DateTime // store UTC midnight for that day (YYYY-MM-DDT00:00:00Z)
+  time         String // "HH:MM"
+  discount     Int // 0–100 (%)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([restaurantId, date, time])
+  @@index([restaurantId, date])
+}
+
+/// ---------------------------------------------------------------------------
+/// AUTH & PEOPLE LAYER
+/// These models let your teammate wire up authentication, and give you
+/// customer profiles with interests + restaurant admins.
+/// ---------------------------------------------------------------------------
+
+/// Role for the Account. We keep it very small on purpose.
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+/// A login identity. One row per human (or service).
+/// - `email` is unique so we can find the account quickly.
+/// - `passwordHash` is optional for now: if you later use OAuth-only,
+///   you won’t need it; if you use email+password, you can make it required.
+/// - `role` tells your app if this account acts as a CUSTOMER or an ADMIN.
+model Account {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String?   // optional now; make required later if using password login
+  role         Role      @default(CUSTOMER)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // 1:1 links to either a Customer or an Admin profile.
+  // (Only one of these is expected to exist per account.)
+  customer     Customer?
+  admin        Admin?
+}
+
+/// A booker profile (what your frontend will use when a user makes a booking).
+/// - `interests` is a Postgres text[] array; default is an empty array.
+/// - We keep this bare-bones per your request.
+model Customer {
+  id         Int       @id @default(autoincrement())
+  accountId  Int       @unique        // 1:1 with Account
+  name       String
+
+  /// Topics the customer cares about. We’ll surface these when another
+  /// user hovers a table (“people here like: cats, music”).
+  interests  String[]  @default([])
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  bookings Booking[]
+
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // NOTE: We will add a relation to Booking later in a separate step to avoid
+  // forward references during migration.
+}
+
+/// An admin for a specific restaurant (manager, staff, etc.).
+/// - Each admin is tied to exactly one restaurant.
+/// - They sign in via their Account with role ADMIN.
+model Admin {
+  id           Int        @id @default(autoincrement())
+  accountId    Int        @unique
+  restaurantId Int
+  name         String
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  account      Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId])
+}
+
+/// ---------------------------------------------------------------------------
+/// SEATING LAYER
+/// Physical tables inside a restaurant. Bookings will attach to these.
+/// ---------------------------------------------------------------------------
+model DiningTable {
+  id           Int        @id @default(autoincrement())
+
+  /// Which restaurant this table belongs to
+  restaurantId Int
+
+  /// Human-visible label shown in the UI (e.g., "T1", "Booth-3", "Window-2")
+  label        String
+
+  /// Total seats at this table
+  seatingCap   Int
+
+  /// Relation back to Restaurant
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  bookings Booking[]
+
+
+  /// A single restaurant cannot reuse the same label on two tables.
+  @@unique([restaurantId, label])
+
+  /// Helpful for filtering all tables by restaurant
+  @@index([restaurantId])
+}
+
+/// ---------------------------------------------------------------------------
+/// MENU LAYER
+/// Each restaurant can list menu items. Bookings may optionally preselect
+/// items via BookingItem (added now, linked once Booking exists).
+/// ---------------------------------------------------------------------------
+model MenuItem {
+  id           Int        @id @default(autoincrement())
+
+  /// Which restaurant this menu item belongs to
+  restaurantId Int
+
+  name         String
+  description  String?
+  priceCents   Int        // store money as integer cents to avoid floats
+  isSetMenu    Boolean    @default(false) // true for fixed-price “set menus”
+  isActive     Boolean    @default(true)  // simple toggle without deleting
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  // Backref to BookingItem will be usable after we add Booking
+  bookingItems BookingItem[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([restaurantId, isActive])
+}
+
+model BookingItem {
+  id          Int       @id @default(autoincrement())
+
+  /// Link to the parent booking
+  bookingId   Int
+
+  /// Which item was selected for that booking
+  menuItemId  Int
+
+  qty         Int       @default(1)
+
+  // Relations
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([bookingId])
+  @@index([menuItemId])
+}
+
+
+/// ---------------------------------------------------------------------------
+/// BOOKING LAYER
+/// 1-hour bookings, start only on the hour. A booking uses seats on ONE table.
+/// Multiple bookings can share a table if seatingCap is not exceeded.
+/// Seat arithmetic is enforced in application logic (transaction).
+/// ---------------------------------------------------------------------------
+
+enum BookingStatus {
+  BOOKED     // set when created
+  COMPLETED  // set after the hour passes (cron or job)
+}
+
+model Booking {
+  id           Int            @id @default(autoincrement())
+
+  /// Foreign keys
+  restaurantId Int
+  tableId      Int
+  customerId   Int
+
+  /// People count for this booking (must be > 0 and <= remaining seats at the chosen table)
+  partySize    Int
+
+  /// 1-hour window:
+  /// - startsAt must be on the hour (00 minutes) in app validation
+  /// - endsAt should equal startsAt + 1 hour (set by app when creating)
+  startsAt     DateTime
+  endsAt       DateTime
+
+  status       BookingStatus  @default(BOOKED)
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  /// Relations
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table        DiningTable    @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  customer     Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  /// Line items (optional preselected menu)
+  items        BookingItem[]
+
+  /// Helpful indexes for availability lookups
+  @@index([restaurantId, startsAt])
+  @@index([tableId, startsAt])
+  @@index([customerId, startsAt])
+
+  /// Optional guard: avoid duplicate bookings by the SAME customer for the SAME table & hour.
+  /// (Seat capacity is still enforced in app logic.)
+  @@unique([customerId, tableId, startsAt])
+}
+
+

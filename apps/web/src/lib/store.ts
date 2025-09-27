@@ -1,6 +1,8 @@
 // simple in-memory store for now.
 // after prisma is set teh same API route can be used for it.
 
+export const accounts: any[] = []
+
 type Slot = { time: string; discount: number };
 
 type GlobalStore = { accepted: Record<string, Slot[]> };
