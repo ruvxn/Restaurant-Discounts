@@ -10,9 +10,10 @@ import { todayYMD } from "@/src/lib/time";
 // GET /api/restaurants/:id/discounts
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // marking as Promise 
 ) {
-  const id = params.id;
+  const {id} = await params; // must await due to Promise
+
   const date = new URL(req.url).searchParams.get("date") ?? todayYMD();
   const saved = getAccepted(id, date);
   const rows = mergeWithDefaults(saved, defaultHours); // full grid with overrides
