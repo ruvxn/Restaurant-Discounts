@@ -59,6 +59,7 @@ model AcceptedDiscount {
 
   @@unique([restaurantId, date, time])
   @@index([restaurantId, date])
+  @@index([restaurantId, time])
 }
 
 /// ---------------------------------------------------------------------------
@@ -100,9 +101,11 @@ model Customer {
   id         Int       @id @default(autoincrement())
   accountId  Int       @unique        // 1:1 with Account
   name       String
+  birthday   DateTime?              // Optional birthday
+  phone      String?                // Optional phone number
 
-  /// Topics the customer cares about. We’ll surface these when another
-  /// user hovers a table (“people here like: cats, music”).
+  /// Topics the customer cares about. We'll surface these when another
+  /// user hovers a table ("people here like: cats, music").
   interests  String[]  @default([])
 
   createdAt  DateTime  @default(now())
@@ -179,9 +182,14 @@ model MenuItem {
 
   name         String
   description  String?
+  category     String?
+  imageUrl     String?
   priceCents   Int        // store money as integer cents to avoid floats
   isSetMenu    Boolean    @default(false) // true for fixed-price “set menus”
   isActive     Boolean    @default(true)  // simple toggle without deleting
+  isVegetarian Boolean    @default(false)
+  isVegan      Boolean    @default(false)
+  isGlutenFree Boolean    @default(false)
 
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
@@ -192,6 +200,7 @@ model MenuItem {
   updatedAt    DateTime   @updatedAt
 
   @@index([restaurantId, isActive])
+  @@index([restaurantId, category])
 }
 
 model BookingItem {
@@ -204,6 +213,7 @@ model BookingItem {
   menuItemId  Int
 
   qty         Int       @default(1)
+  notes       String?
 
   // Relations
   booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
@@ -214,12 +224,13 @@ model BookingItem {
 
   @@index([bookingId])
   @@index([menuItemId])
+  @@index([bookingId, menuItemId])
 }
 
 
 /// ---------------------------------------------------------------------------
 /// BOOKING LAYER
-/// 1-hour bookings, start only on the hour. A booking uses seats on ONE table.
+/// 2-hour bookings, start only on the hour. A booking uses seats on ONE table.
 /// Multiple bookings can share a table if seatingCap is not exceeded.
 /// Seat arithmetic is enforced in application logic (transaction).
 /// ---------------------------------------------------------------------------
@@ -227,6 +238,7 @@ model BookingItem {
 enum BookingStatus {
   BOOKED     // set when created
   COMPLETED  // set after the hour passes (cron or job)
+  CANCELLED  // soft delete marker
 }
 
 model Booking {
@@ -240,13 +252,21 @@ model Booking {
   /// People count for this booking (must be > 0 and <= remaining seats at the chosen table)
   partySize    Int
 
-  /// 1-hour window:
+  /// 2-hour window:
   /// - startsAt must be on the hour (00 minutes) in app validation
-  /// - endsAt should equal startsAt + 1 hour (set by app when creating)
+  /// - endsAt should equal startsAt + 2 hours (set by app when creating)
   startsAt     DateTime
   endsAt       DateTime
 
+  /// Pricing and discounts
+  /// Store both original and discounted totals to show savings clearly
+  originalTotal   Float  @default(0) // total before discount
+  discountedTotal Float  @default(0) // total after discount
+  discountPercent Int    @default(0) // discount percentage applied (0-100)
+
   status       BookingStatus  @default(BOOKED)
+  cancelledAt  DateTime?
+  cancellationReason String?
 
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -261,12 +281,12 @@ model Booking {
 
   /// Helpful indexes for availability lookups
   @@index([restaurantId, startsAt])
-  @@index([tableId, startsAt])
   @@index([customerId, startsAt])
+  @@index([tableId, startsAt])
+  @@index([restaurantId, status, startsAt])
+  @@index([customerId, status, startsAt])
 
   /// Optional guard: avoid duplicate bookings by the SAME customer for the SAME table & hour.
   /// (Seat capacity is still enforced in app logic.)
   @@unique([customerId, tableId, startsAt])
 }
-
-

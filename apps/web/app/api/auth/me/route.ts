@@ -52,29 +52,57 @@ export async function GET(req: NextRequest) {
 
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { accounts } from '@/src/lib/store'
+import { prisma } from '@/src/lib/prisma'
 
-export async function GET(req: NextRequest) {
-  // Get session cookie
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')
-
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Parse session JSON
-  let sessionData
+export async function GET() {
   try {
-    sessionData = JSON.parse(session.value)
-  } catch {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
-  }
+    // Get session cookie
+    const cookieStore = await cookies()
+    const session = cookieStore.get('session')
 
-  const account = accounts.find((a) => a.id === sessionData.id)
-  if (!account) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-  return NextResponse.json({ account })
+    // Parse session JSON
+    let sessionData
+    try {
+      sessionData = JSON.parse(session.value)
+    } catch {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    }
+
+    // Get account with related data
+    const account = await prisma.account.findUnique({
+      where: { id: sessionData.accountId },
+      include: {
+        customer: true,
+        admin: {
+          include: {
+            restaurant: true,
+          },
+        },
+      },
+    })
+
+    if (!account) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 401 })
+    }
+
+    // Return account info with role-specific data
+    const responseData = {
+      accountId: account.id,
+      email: account.email,
+      role: account.role,
+      customer: account.customer,
+      admin: account.admin,
+      restaurant: account.admin?.restaurant || null,
+      restaurantName: account.admin?.restaurant?.name || null,
+    }
+
+    return NextResponse.json(responseData)
+  } catch (error) {
+    console.error('Get me error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

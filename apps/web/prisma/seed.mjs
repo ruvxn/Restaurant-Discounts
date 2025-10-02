@@ -20,11 +20,15 @@ async function seedTables(restaurantId, tables) {
   });
 }
 
-async function seedAdmin({ restaurant, email, name }) {
+async function seedAdmin({ restaurant, email, name, password = 'admin123' }) {
+  // Import bcrypt for password hashing
+  const bcrypt = await import('bcryptjs');
+  const passwordHash = await bcrypt.hash(password, 10);
+
   const account = await prisma.account.upsert({
     where: { email },
-    update: { role: 'ADMIN' },
-    create: { email, role: 'ADMIN' },
+    update: { role: 'ADMIN', passwordHash },
+    create: { email, role: 'ADMIN', passwordHash },
   });
 
   await prisma.admin.upsert({
@@ -34,11 +38,15 @@ async function seedAdmin({ restaurant, email, name }) {
   });
 }
 
-async function seedCustomer({ email, name, interests }) {
+async function seedCustomer({ email, name, interests, password = 'customer123' }) {
+  // Import bcrypt for password hashing
+  const bcrypt = await import('bcryptjs');
+  const passwordHash = await bcrypt.hash(password, 10);
+
   const account = await prisma.account.upsert({
     where: { email },
-    update: { role: 'CUSTOMER' },
-    create: { email, role: 'CUSTOMER' },
+    update: { role: 'CUSTOMER', passwordHash },
+    create: { email, role: 'CUSTOMER', passwordHash },
   });
 
   await prisma.customer.upsert({
@@ -205,39 +213,224 @@ async function main() {
   ]);
 
   /** --- Admins --- */
-  await seedAdmin({ restaurant: sushi,  email: 'admin+sushi@demo.local',  name: 'Sushi Admin'  });
-  await seedAdmin({ restaurant: sunset, email: 'admin+sunset@demo.local', name: 'Sunset Admin' });
-  await seedAdmin({ restaurant: pasta,  email: 'admin+pasta@demo.local',  name: 'Pasta Admin'  });
+  await seedAdmin({
+    restaurant: sushi,
+    email: 'admin@sushihouse.com',
+    name: 'Sushi House Manager',
+    password: 'sushi123'
+  });
+  await seedAdmin({
+    restaurant: sunset,
+    email: 'admin@sunsetgrill.com',
+    name: 'Sunset Grill Manager',
+    password: 'sunset123'
+  });
+  await seedAdmin({
+    restaurant: pasta,
+    email: 'admin@pastaplace.com',
+    name: 'Pasta Place Manager',
+    password: 'pasta123'
+  });
 
   /** --- Customers --- */
   const alice = await seedCustomer({
-    email: 'alice@demo.local',
+    email: 'alice@demo.com',
     name: 'Alice Demo',
     interests: ['cats', 'music'],
+    password: 'alice123'
   });
   const bob = await seedCustomer({
-    email: 'bob@demo.local',
+    email: 'bob@demo.com',
     name: 'Bob Demo',
     interests: ['archery'],
+    password: 'bob123'
   });
 
   /** --- Menu Items --- */
   await seedMenu(sushi.id, [
-    { name: 'Salmon Nigiri (2pc)', priceCents: 600, isSetMenu: false, isActive: true },
-    { name: 'Chef Omakase',        priceCents: 5500, isSetMenu: true,  isActive: true },
-    { name: 'Miso Soup',           priceCents: 300, isSetMenu: false,  isActive: true },
+    {
+      name: 'Salmon Nigiri (2pc)',
+      description: 'Fresh Atlantic salmon on seasoned rice',
+      category: 'Nigiri',
+      imageUrl: '/images/menu/sushi-salmon.jpg',
+      priceCents: 600,
+      isSetMenu: false,
+      isActive: true,
+      isGlutenFree: true,
+    },
+    {
+      name: 'Miso Soup',
+      description: 'Tofu, wakame, and scallions in a light broth',
+      category: 'Starters',
+      imageUrl: '/images/menu/miso-soup.jpg',
+      priceCents: 300,
+      isSetMenu: false,
+      isActive: true,
+      isVegetarian: true,
+      isVegan: true,
+    },
+    // Set Menus
+    {
+      name: 'Chef Omakase',
+      description: 'Seasonal chef selection of 10 courses including premium sashimi, nigiri, and specialty rolls',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/omakase.jpg',
+      priceCents: 5500,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'Sushi Deluxe Set',
+      description: '12 pieces of assorted nigiri, 8 pieces California roll, miso soup, and green tea ice cream',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/sushi-deluxe.jpg',
+      priceCents: 3200,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'Vegetarian Sushi Set',
+      description: 'Avocado roll, cucumber roll, vegetable tempura roll, edamame, and miso soup',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/veg-sushi.jpg',
+      priceCents: 2400,
+      isSetMenu: true,
+      isActive: true,
+      isVegetarian: true,
+    },
+    {
+      name: 'Sashimi Lover Set',
+      description: '15 pieces of premium sashimi including tuna, salmon, yellowtail, with wasabi and soy sauce',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/sashimi-set.jpg',
+      priceCents: 4200,
+      isSetMenu: true,
+      isActive: true,
+      isGlutenFree: true,
+    },
   ]);
 
   await seedMenu(sunset.id, [
-    { name: 'Ribeye Steak',  priceCents: 3200, isSetMenu: false, isActive: true },
-    { name: 'Grill Combo',   priceCents: 4500, isSetMenu: true,  isActive: true },
-    { name: 'House Salad',   priceCents: 900,  isSetMenu: false, isActive: true },
+    {
+      name: 'Ribeye Steak',
+      description: '300g grass-fed ribeye with herb butter',
+      category: 'Mains',
+      imageUrl: '/images/menu/ribeye.jpg',
+      priceCents: 3200,
+      isSetMenu: false,
+      isActive: true,
+      isGlutenFree: true,
+    },
+    {
+      name: 'House Salad',
+      description: 'Mixed greens, cherry tomatoes, balsamic vinaigrette',
+      category: 'Starters',
+      imageUrl: '/images/menu/house-salad.jpg',
+      priceCents: 900,
+      isSetMenu: false,
+      isActive: true,
+      isVegetarian: true,
+      isVegan: true,
+      isGlutenFree: true,
+    },
+    // Set Menus
+    {
+      name: 'Grill Combo',
+      description: 'Chef selection of grilled meats including ribeye, chicken, lamb chops, seasonal vegetables, and house fries',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/grill-combo.jpg',
+      priceCents: 4500,
+      isSetMenu: true,
+      isActive: true,
+      isGlutenFree: true,
+    },
+    {
+      name: 'Surf & Turf Set',
+      description: '200g sirloin steak, grilled prawns, lobster tail, roasted vegetables, garlic butter, and choice of side',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/surf-turf.jpg',
+      priceCents: 6800,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'BBQ Platter',
+      description: 'BBQ ribs, pulled pork, grilled chicken, coleslaw, cornbread, and smoky beans',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/bbq-platter.jpg',
+      priceCents: 3900,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'Sunset Special',
+      description: 'Grilled salmon, mixed seafood skewers, garden salad, lemon butter sauce, and rice pilaf',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/sunset-special.jpg',
+      priceCents: 4200,
+      isSetMenu: true,
+      isActive: true,
+    },
   ]);
 
   await seedMenu(pasta.id, [
-    { name: 'Spaghetti Bolognese', priceCents: 2200, isSetMenu: false, isActive: true },
-    { name: 'Tasting Menu',        priceCents: 3900, isSetMenu: true,  isActive: true },
-    { name: 'Garlic Bread',        priceCents: 700,  isSetMenu: false, isActive: true },
+    {
+      name: 'Spaghetti Bolognese',
+      description: 'Slow-cooked beef ragu with house-made pasta',
+      category: 'Mains',
+      imageUrl: '/images/menu/spaghetti-bolognese.jpg',
+      priceCents: 2200,
+      isSetMenu: false,
+      isActive: true,
+    },
+    {
+      name: 'Garlic Bread',
+      description: 'Wood-fired sourdough with garlic herb butter',
+      category: 'Starters',
+      imageUrl: '/images/menu/garlic-bread.jpg',
+      priceCents: 700,
+      isSetMenu: false,
+      isActive: true,
+      isVegetarian: true,
+    },
+    // Set Menus
+    {
+      name: 'Tasting Menu',
+      description: 'Five-course journey through Italian classics including antipasti, soup, pasta, main, and dessert',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/tasting-menu.jpg',
+      priceCents: 3900,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'Pasta Lover Set',
+      description: 'Three pasta dishes - carbonara, marinara, and pesto - with garlic bread and tiramisu',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/pasta-lover.jpg',
+      priceCents: 3200,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'Family Feast',
+      description: 'Large portions of lasagna, fettuccine alfredo, caesar salad, garlic bread, and family-size tiramisu',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/family-feast.jpg',
+      priceCents: 5500,
+      isSetMenu: true,
+      isActive: true,
+    },
+    {
+      name: 'Vegetarian Italian Set',
+      description: 'Caprese salad, mushroom risotto, eggplant parmigiana, garlic bread, and panna cotta',
+      category: 'Set Menu',
+      imageUrl: '/images/menu/veg-italian.jpg',
+      priceCents: 2900,
+      isSetMenu: true,
+      isActive: true,
+      isVegetarian: true,
+    },
   ]);
 
   /** --- Bookings (1-hour) ---

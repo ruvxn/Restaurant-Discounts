@@ -1,0 +1,411 @@
+.page {
+  background: #fff6f0;
+  min-height: 100vh;
+  padding: clamp(40px, 6vw, 80px) clamp(24px, 6vw, 60px);
+}
+
+.inner {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.statusBanner {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 2px solid;
+  padding: clamp(32px, 4vw, 48px);
+  text-align: center;
+  box-shadow: 0 26px 52px -32px rgba(255, 112, 67, 0.3);
+}
+
+.statusBannerSuccess {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5, #ffffff);
+}
+
+.statusBannerCancelled {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2, #ffffff);
+}
+
+.statusIcon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.statusTitle {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+  color: #2a1209;
+  margin: 0 0 12px 0;
+}
+
+.statusMessage {
+  font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+  color: #a04b2a;
+  margin: 0;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 143, 102, 0.22);
+  box-shadow: 0 26px 52px -32px rgba(255, 112, 67, 0.4);
+  padding: clamp(28px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 143, 102, 0.15);
+}
+
+.restaurantInfo h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a1209;
+  margin: 0 0 6px 0;
+}
+
+.restaurantCategory {
+  font-size: 0.9rem;
+  color: #a04b2a;
+}
+
+.bookingMeta {
+  text-align: right;
+}
+
+.metaLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.metaValue {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2a1209;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detailCard {
+  background: linear-gradient(135deg, rgba(255, 244, 236, 0.6), rgba(255, 255, 255, 0.8));
+  border-radius: 16px;
+  border: 1px solid rgba(255, 143, 102, 0.15);
+  padding: 16px 20px;
+}
+
+.detailLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.detailValue {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2a1209;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.statusBooked {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+}
+
+.statusCancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.statusCompleted {
+  background: rgba(100, 116, 139, 0.15);
+  color: #475569;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2a1209;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.itemBadge {
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item {
+  background: rgba(255, 244, 236, 0.5);
+  border: 1px solid rgba(255, 143, 102, 0.18);
+  border-radius: 16px;
+  padding: 18px 22px;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.itemName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #36140b;
+  margin: 0;
+}
+
+.itemQty {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-left: 8px;
+}
+
+.itemPrice {
+  font-size: 0.9rem;
+  color: #a04b2a;
+}
+
+.itemTotal {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2a1209;
+}
+
+.itemNotes {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.pricingSummary {
+  padding-top: 24px;
+  border-top: 2px solid rgba(255, 143, 102, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pricingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.pricingLabel {
+  color: #64748b;
+}
+
+.pricingValue {
+  font-weight: 600;
+  color: #2a1209;
+}
+
+.discountRow {
+  color: #10b981;
+}
+
+.discountRow .pricingLabel,
+.discountRow .pricingValue {
+  color: #059669;
+  font-weight: 600;
+}
+
+.totalRow {
+  font-size: 1.25rem;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 143, 102, 0.15);
+}
+
+.totalRow .pricingLabel,
+.totalRow .pricingValue {
+  font-weight: 700;
+  color: #2a1209;
+}
+
+.savingsBanner {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #10b981;
+  border-radius: 16px;
+  padding: 16px 24px;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #047857;
+}
+
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.button {
+  flex: 1;
+  min-width: 180px;
+  padding: 14px 24px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  color: #fff;
+}
+
+.buttonPrimary:hover {
+  background: linear-gradient(135deg, #ff996f, #ff7043);
+}
+
+.buttonSecondary {
+  background: rgba(255, 143, 102, 0.15);
+  color: #a04b2a;
+}
+
+.buttonSecondary:hover {
+  background: rgba(255, 143, 102, 0.25);
+}
+
+.buttonModify {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #fff;
+}
+
+.buttonModify:hover {
+  background: linear-gradient(135deg, #fcd34d, #fbbf24);
+}
+
+.buttonCancel {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+}
+
+.buttonCancel:hover {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+}
+
+.button:disabled {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.managementCard {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 143, 102, 0.22);
+  box-shadow: 0 26px 52px -32px rgba(255, 112, 67, 0.4);
+  padding: clamp(28px, 3vw, 40px);
+}
+
+.managementTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2a1209;
+  margin: 0 0 20px 0;
+}
+
+.managementButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.helpText {
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.warningText {
+  font-size: 0.85rem;
+  color: #dc2626;
+  margin-top: 12px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 32px 20px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bookingMeta {
+    text-align: left;
+  }
+
+  .button {
+    min-width: 100%;
+  }
+
+  .managementButtons {
+    flex-direction: column;
+  }
+}

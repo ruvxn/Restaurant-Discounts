@@ -1,0 +1,107 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.refreshGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.refreshButton {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 143, 102, 0.35);
+  background: rgba(255, 255, 255, 0.92);
+  color: #a04b2a;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.refreshButton:hover {
+  background: rgba(255, 191, 150, 0.2);
+  transform: translateY(-1px);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 143, 102, 0.22);
+  background: rgba(255, 244, 236, 0.92);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px -26px rgba(255, 112, 67, 0.4);
+}
+
+.tileTime {
+  font-weight: 600;
+  color: #36140b;
+}
+
+.tileDiscount {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.tileLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d2957b;
+}
+
+.tileQuality {
+  font-size: 0.75rem;
+  color: #a04b2a;
+  font-weight: 500;
+}
+
+.state {
+  text-align: center;
+  padding: 16px;
+  color: #b9603b;
+  font-size: 0.95rem;
+}
+
+.error {
+  text-align: center;
+  padding: 16px;
+  color: #d9382e;
+  font-size: 0.95rem;
+}
+
+.error button {
+  margin-top: 12px;
+}

@@ -90,30 +90,115 @@ export async function POST(req: NextRequest) {
 
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { accounts } from '@/src/lib/store'
+import { cookies } from 'next/headers'
+import { prisma } from '@/src/lib/prisma'
+
+type Role = 'CUSTOMER' | 'ADMIN'
 
 export async function POST(req: NextRequest) {
-  const { email, password, role, name, restaurantId } = await req.json()
+  try {
+    const { email, password, role, name, restaurantId, interests } = await req.json()
 
-  // Check if email already exists
-  const exists = accounts.find((a) => a.email === email)
-  if (exists) {
-    return NextResponse.json({ error: 'Email already taken' }, { status: 409 })
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      )
+    }
+
+    // Check if account already exists
+    const exists = await prisma.account.findUnique({ where: { email } })
+    if (exists) {
+      return NextResponse.json(
+        { error: 'Email already taken' },
+        { status: 409 }
+      )
+    }
+
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10)
+
+    // Create account
+    const account = await prisma.account.create({
+      data: {
+        email,
+        passwordHash,
+        role: (role as Role) ?? 'CUSTOMER',
+      },
+    })
+
+    let customer = null
+    let admin = null
+
+    // Create related profile based on role
+    if ((role as Role) === 'ADMIN') {
+      if (!restaurantId) {
+        return NextResponse.json(
+          { error: 'restaurantId required for ADMIN' },
+          { status: 400 }
+        )
+      }
+
+      admin = await prisma.admin.create({
+        data: {
+          accountId: account.id,
+          restaurantId,
+          name: name || 'Admin',
+        },
+      })
+    } else {
+      customer = await prisma.customer.create({
+        data: {
+          accountId: account.id,
+          name: name || 'Customer',
+          interests: interests || [],
+        },
+      })
+    }
+
+    // Auto-login: set session cookie
+    const session: Record<string, unknown> = {
+      accountId: account.id,
+      email: account.email,
+      role: account.role,
+    }
+
+    // Add role-specific fields to session
+    if (admin) {
+      session.adminId = admin.id
+      session.restaurantId = admin.restaurantId
+      session.name = admin.name
+    } else if (customer) {
+      session.customerId = customer.id
+      session.name = customer.name
+    }
+
+    const cookieStore = await cookies()
+    cookieStore.set(
+      'session',
+      JSON.stringify(session),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24, // 1 day
+      }
+    )
+
+    // Return AuthUser shape
+    return NextResponse.json({
+      accountId: account.id,
+      email: account.email,
+      role: account.role,
+      customer: customer ? { id: customer.id, name: customer.name } : null,
+      admin: admin ? { id: admin.id, name: admin.name, restaurantId: admin.restaurantId } : null,
+    })
+  } catch (error) {
+    console.error('Signup error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
-
-  // Hash the password before storing
-  const passwordHash = await bcrypt.hash(password, 10)
-
-  // Save account into in-memory array
-  const account = {
-    id: accounts.length + 1,
-    email,
-    passwordHash,
-    role: role ?? 'CUSTOMER',
-    name: name ?? 'User',
-    restaurantId: restaurantId ?? null,
-  }
-  accounts.push(account)
-
-  return NextResponse.json({ success: true, account })
 }

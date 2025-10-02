@@ -9,13 +9,13 @@ export async function POST() {
   return res
 }
 */
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   // Clear the session cookie
   const cookieStore = await cookies()
-  cookieStore.set('session', '', { maxAge: 0 })
+  cookieStore.delete('session')
 
   return NextResponse.json({ success: true })
 }

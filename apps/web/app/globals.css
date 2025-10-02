@@ -1,0 +1,34 @@
+/* Global theme variables - Peach/Orange palette */
+:root {
+  --brand-500: #ff7043;
+  --brand-600: #f25d2d;
+  --brand-300: #ffb08c;
+  --ink: #36140b;
+  --ink-soft: #a04b2a;
+  --surface: #fff6f0;
+  --card: #fff;
+  --card-border: rgba(255, 143, 102, 0.22);
+  --shadow: 0 24px 48px -20px rgba(255, 112, 67, 0.35);
+}
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}

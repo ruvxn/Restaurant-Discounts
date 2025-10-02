@@ -1,0 +1,347 @@
+.page {
+  min-height: 100vh;
+  background: #fff6f0;
+  padding: clamp(40px, 6vw, 72px) clamp(32px, 7vw, 96px);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.topBar {
+  margin-bottom: -8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.topLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 143, 102, 0.25);
+  border-radius: 10px;
+  color: #a04b2a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.topLink:hover {
+  background: #ffffff;
+  border-color: #ff7043;
+  color: #ff7043;
+  transform: translateY(-1px);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.restaurantBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(255, 138, 92, 0.15), rgba(255, 112, 67, 0.12));
+  border: 1px solid rgba(255, 143, 102, 0.3);
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.restaurantIcon {
+  font-size: 1.2rem;
+}
+
+.restaurantName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ff7043;
+}
+
+.title {
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: #36140b;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #a04b2a;
+}
+
+.toolbar {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 143, 102, 0.22);
+  box-shadow: 0 28px 48px -32px rgba(255, 112, 67, 0.38);
+  padding: clamp(20px, 3vw, 28px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.field {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a04b2a;
+}
+
+.dateInput {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 143, 102, 0.45);
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 0.95rem;
+  color: #36140b;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #ff7043;
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.18);
+  background: #fff;
+}
+
+.primaryButton {
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff8f64, #ff7043);
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled {
+  background: rgba(255, 143, 102, 0.45);
+  cursor: progress;
+}
+
+.legend {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 143, 102, 0.18);
+  box-shadow: 0 24px 48px -32px rgba(255, 112, 67, 0.35);
+  padding: clamp(18px, 3vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.legendList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.9rem;
+  color: #a04b2a;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.tableWrapper {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 143, 102, 0.18);
+  box-shadow: 0 30px 54px -32px rgba(255, 112, 67, 0.38);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: #fff1e6;
+}
+
+.table th {
+  text-align: left;
+  padding: 16px 24px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b9603b;
+}
+
+.table td {
+  padding: 18px 24px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  font-size: 0.95rem;
+  color: #36140b;
+}
+
+.table tr:hover td {
+  background: rgba(255, 239, 228, 0.65);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pillGreen {
+  background: rgba(255, 176, 136, 0.25);
+  color: #a04b2a;
+}
+
+.pillYellow {
+  background: rgba(255, 129, 79, 0.22);
+  color: #b45309;
+}
+
+.discountInput {
+  width: 70px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 143, 102, 0.35);
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 0.95rem;
+  color: #36140b;
+  font-weight: 600;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.discountInput:focus {
+  outline: none;
+  border-color: #ff7043;
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.18);
+  background: #fff;
+}
+
+.discountInput.edited {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.percentSign {
+  margin-left: 4px;
+  color: #a04b2a;
+  font-weight: 600;
+}
+
+.tableAction {
+  background: none;
+  border: none;
+  color: #ff7043;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tableAction:hover {
+  text-decoration: underline;
+}
+
+.tableActionSecondary {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.tableActionSecondary:hover {
+  color: #334155;
+  text-decoration: underline;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  color: #a04b2a;
+}
+
+.stats {
+  background: #ffffff;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 143, 102, 0.18);
+  box-shadow: 0 26px 52px -32px rgba(255, 112, 67, 0.35);
+  padding: clamp(24px, 3vw, 30px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 24px;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: #d2957b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.statValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #36140b;
+}
+
+.error {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 32px 20px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryButton {
+    width: 100%;
+  }
+}

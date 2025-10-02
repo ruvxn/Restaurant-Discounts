@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "public"."Booking" ADD COLUMN     "discountPercent" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "discountedTotal" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "originalTotal" DOUBLE PRECISION NOT NULL DEFAULT 0;

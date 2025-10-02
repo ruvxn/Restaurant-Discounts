@@ -47,34 +47,87 @@ export async function POST(req: NextRequest) {
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
-import { accounts } from '@/src/lib/store'
+import { prisma } from '@/src/lib/prisma'
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json()
+  try {
+    const { email, password } = await req.json()
 
-  // Find account by email
-  const account = accounts.find((a) => a.email === email)
-  if (!account) {
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
-  }
-
-  // Compare password with stored hash
-  const valid = await bcrypt.compare(password, account.passwordHash)
-  if (!valid) {
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
-  }
-
-  // Use await with cookies() to set session
-  const cookieStore = await cookies()
-  cookieStore.set(
-    'session',
-    JSON.stringify({ id: account.id, role: account.role }),
-    {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 5, 
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
-  )
 
-  return NextResponse.json({ success: true })
+    // Find account by email
+    const account = await prisma.account.findUnique({ where: { email } })
+    if (!account || !account.passwordHash) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+
+    // Compare password with stored hash
+    const valid = await bcrypt.compare(password, account.passwordHash)
+    if (!valid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+
+    // Create session object with role-specific data
+    const session: Record<string, unknown> = {
+      accountId: account.id,
+      email: account.email,
+      role: account.role,
+    }
+
+    // Add role-specific fields to session
+    if (account.role === 'ADMIN') {
+      const admin = await prisma.admin.findUnique({
+        where: { accountId: account.id },
+        select: { id: true, restaurantId: true, name: true },
+      })
+
+      if (!admin) {
+        return NextResponse.json({ error: 'Admin profile not found' }, { status: 404 })
+      }
+
+      session.adminId = admin.id
+      session.restaurantId = admin.restaurantId
+      session.name = admin.name
+    } else if (account.role === 'CUSTOMER') {
+      const customer = await prisma.customer.findUnique({
+        where: { accountId: account.id },
+        select: { id: true, name: true },
+      })
+
+      if (customer) {
+        session.customerId = customer.id
+        session.name = customer.name
+      }
+    }
+
+    // Set session cookie
+    const cookieStore = await cookies()
+    cookieStore.set(
+      'session',
+      JSON.stringify(session),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24, // 1 day
+      }
+    )
+
+    // Return full user data (AuthContext expects this shape)
+    const responseData = {
+      accountId: account.id,
+      email: account.email,
+      role: account.role,
+      customer: session.customerId ? { id: session.customerId as number, name: session.name as string | null } : null,
+      admin: session.adminId ? { id: session.adminId as number, name: session.name as string | null, restaurantId: session.restaurantId as number } : null,
+    }
+
+    return NextResponse.json(responseData)
+  } catch (error) {
+    console.error('Login error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

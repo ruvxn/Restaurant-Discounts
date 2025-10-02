@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx"
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "dev:all": "concurrently \"npm run dev\" \"cd ../../services/model-server && uvicorn app:app --reload --port 8000\"",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "npx prisma db seed",
+    "db:reset": "npx prisma migrate reset"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
@@ -14,24 +18,28 @@
     "cookie": "^1.0.2",
     "next": "15.5.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
-    "react-icons": "^5.5.0"
+    "react-dom": "19.1.0",
+    "react-icons": "^5.5.0",
+    "sonner": "^1.5.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "autoprefixer": "^10",
+    "concurrently": "^9.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
+    "postcss": "^8",
     "prisma": "^6.15.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
-    "autoprefixer": "^10",
-    "postcss": "^8",
   }
 }

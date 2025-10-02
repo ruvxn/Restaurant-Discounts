@@ -1,82 +1,157 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GoHeart, GoHeartFill } from "react-icons/go";
 import styles from "./Home.module.css";
+import CustomerNav from "@/components/CustomerNav";
 
-const restaurants = [
-  {
-    id: 1,
-    name: "Sunset Grill",
-    cuisine: "Western",
-    hours: "10:00am - 10:00pm",
-    maxDiscount: 30,
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 2,
-    name: "Pasta Place",
-    cuisine: "Italian",
-    hours: "11:00am - 11:00pm",
-    maxDiscount: 20,
-    image: "https://images.pexels.com/photos/6193381/pexels-photo-6193381.jpeg?auto=compress&w=800&q=80",
-  },
-  {
-    id: 3,
-    name: "Sushi House",
-    cuisine: "Japanese",
-    hours: "12:00pm - 9:00pm",
-    maxDiscount: 10,
-    image: "https://images.pexels.com/photos/31326827/pexels-photo-31326827.jpeg?auto=compress&w=800&q=80",
-  },
-];
+type Restaurant = {
+  id: string;
+  name: string;
+  slug: string;
+  category: string | null;
+  open: number;
+  close: number;
+  googleRating: number | null;
+  averageBill: number | null;
+  distanceKm: number | null;
+  maxDiscount?: number;
+};
 
 export default function Home() {
   const router = useRouter();
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [favorites, setFavorites] = useState<string[]>([]);
 
-  const toggleFavorite = (id: number) => {
+  useEffect(() => {
+    async function fetchRestaurants() {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/restaurants");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch restaurants");
+        }
+
+        const data = await response.json();
+        setRestaurants(data);
+      } catch (err) {
+        setError("Failed to load restaurants. Please try again.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRestaurants();
+  }, []);
+
+  const toggleFavorite = (id: string) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
   };
 
-  return (
-    <div className={styles["user-content"]}>
-      <h1 className={styles["home-title"]}>HOME PAGE</h1>
-      <p className={styles["home-subtitle"]}>Ready to get some discounts?</p>
+  const formatHours = (open: number, close: number) => {
+    const formatTime = (hour: number) => {
+      const period = hour >= 12 ? "pm" : "am";
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      return `${displayHour}:00${period}`;
+    };
+    return `${formatTime(open)} - ${formatTime(close)}`;
+  };
 
-      <div className={styles["restaurant-cards-row"]}>
-        {restaurants.map((r) => (
-          <div
-            key={r.id}
-            className={styles["restaurant-card"]}
-            onClick={() => router.push(`/restaurant/${r.id}`)}
-          >
-            {/* Discount Badge */}
-            <div className={styles["discount-badge"]}>Up to {r.maxDiscount}%</div>
+  const getRestaurantImage = (slug: string) => {
+    const images: Record<string, string> = {
+      "sunset-grill": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+      "pasta-place": "https://images.pexels.com/photos/6193381/pexels-photo-6193381.jpeg?auto=compress&w=800&q=80",
+      "sushi-house": "https://images.pexels.com/photos/31326827/pexels-photo-31326827.jpeg?auto=compress&w=800&q=80",
+    };
+    return images[slug] || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80";
+  };
 
-            {/* Heart Icon */}
-            <div
-              className={styles["heart-icon"]}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFavorite(r.id);
-              }}
-            >
-              {favorites.includes(r.id) ? <GoHeartFill size={20} /> : <GoHeart size={20} />}
-            </div>
-
-            <img src={r.image} alt={r.name} className={styles["restaurant-image"]} />
-            <div className={styles["restaurant-info"]}>
-              <h2 className={styles["restaurant-name"]}>{r.name}</h2>
-              <div className={styles["restaurant-cuisine"]}>{r.cuisine}</div>
-              <div className={styles["restaurant-hours"]}>{r.hours}</div>
-            </div>
+  const renderState = (message: string) => (
+    <>
+      <CustomerNav />
+      <main className={styles.page}>
+        <div className={styles.inner}>
+          <div className={styles.header}>
+            <h1 className={styles.headerTitle}>Discover Restaurants</h1>
+            <p className={styles.headerSubtitle}>Find great deals at your favorite spots</p>
           </div>
-        ))}
-      </div>
-    </div>
+          <div className={styles.state}>{message}</div>
+        </div>
+      </main>
+    </>
+  );
+
+  if (loading) {
+    return renderState("Loading restaurants…");
+  }
+
+  if (error) {
+    return renderState(error);
+  }
+
+  return (
+    <>
+      <CustomerNav />
+      <main className={styles.page}>
+        <div className={styles.inner}>
+          <header className={styles.header}>
+            <h1 className={styles.headerTitle}>Discover restaurants</h1>
+            <p className={styles.headerSubtitle}>
+              Browse curated dining rooms offering generous off-peak savings, hand-picked for food lovers
+              who value great experiences and smart pricing.
+            </p>
+          </header>
+
+          <section className={styles.grid}>
+            {restaurants.map((r) => (
+              <article
+                key={r.id}
+                className={styles.card}
+                onClick={() => router.push(`/customer/restaurant/${r.id}`)}
+              >
+                <div className={styles.imageWrapper}>
+                  <span className={styles.discountChip}>
+                    {r.maxDiscount ? `Up to ${r.maxDiscount}% off` : "See deals"}
+                  </span>
+
+                  <button
+                    type="button"
+                    className={styles.favoriteButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(r.id);
+                    }}
+                    aria-label={favorites.includes(r.id) ? "Remove from favourites" : "Save to favourites"}
+                  >
+                    {favorites.includes(r.id) ? <GoHeartFill size={18} /> : <GoHeart size={18} />}
+                  </button>
+
+                  <img src={getRestaurantImage(r.slug)} alt={r.name} />
+                </div>
+
+                <div className={styles.body}>
+                  <h2 className={styles.name}>{r.name}</h2>
+                  <div className={styles.meta}>
+                    {r.category && <span className={styles.category}>{r.category}</span>}
+                    <span className={styles.hours}>{formatHours(r.open, r.close)}</span>
+                    {r.distanceKm && <span>{r.distanceKm.toFixed(1)} km away</span>}
+                  </div>
+                  {r.googleRating && (
+                    <span className={styles.rating}>⭐ {r.googleRating.toFixed(1)}</span>
+                  )}
+                </div>
+              </article>
+            ))}
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
