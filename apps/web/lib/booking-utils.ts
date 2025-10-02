@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client';
+import { BookingError, BookingValidationError } from './booking-errors';
 
 const prisma = new PrismaClient();
 
@@ -160,6 +161,162 @@ export async function validateBooking(
     totalCapacity,
     bookedSeats,
   };
+}
+
+/**
+ * Pre-transaction validation for bookings
+ * Performs cheap checks before entering the transaction to fail fast
+ * Returns validation result with error code and message
+ */
+export async function validateBookingPreTransaction(
+  restaurantId: number,
+  startsAt: Date,
+  partySize: number,
+  menuItemId?: number
+): Promise<{ valid: true } | { valid: false; error: BookingError; message: string }> {
+  // 1. Check restaurant-wide capacity
+  const { availableSeats } = await calculateAvailableSeats(restaurantId, startsAt);
+  if (availableSeats < partySize) {
+    return {
+      valid: false,
+      error: BookingError.CAPACITY_EXCEEDED,
+      message: `Restaurant is at capacity. Only ${availableSeats} seat${availableSeats === 1 ? '' : 's'} available.`,
+    };
+  }
+
+  // 2. Check if party size exceeds largest table
+  const tables = await prisma.diningTable.findMany({
+    where: { restaurantId },
+    select: { seatingCap: true },
+    orderBy: { seatingCap: 'desc' },
+    take: 1,
+  });
+
+  const largestTable = tables[0]?.seatingCap || 0;
+  if (partySize > largestTable) {
+    return {
+      valid: false,
+      error: BookingError.PARTY_TOO_LARGE,
+      message: `Party size ${partySize} exceeds largest table capacity (${largestTable} seats).`,
+    };
+  }
+
+  // 3. Menu lock check (will be implemented in Phase 2)
+  // if (menuItemId) {
+  //   const lockConflict = await checkMenuLockConflict(restaurantId, startsAt, menuItemId);
+  //   if (lockConflict) {
+  //     return {
+  //       valid: false,
+  //       error: BookingError.MENU_LOCKED,
+  //       message: `This time slot is reserved for a different menu.`
+  //     };
+  //   }
+  // }
+
+  return { valid: true };
+}
+
+/**
+ * Generate menu lock key from first menu item ID
+ * Format: "menu_<menuItemId>"
+ */
+export function generateMenuLockKey(menuItemId: number): string {
+  return `menu_${menuItemId}`;
+}
+
+/**
+ * Get the active menu lock for a time window at a restaurant
+ * Returns the menuLockKey if any BOOKED booking in that window has one
+ */
+export async function getMenuLock(
+  tx: Prisma.TransactionClient,
+  restaurantId: number,
+  startsAt: Date
+): Promise<string | null> {
+  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+
+  const lockBooking = await tx.booking.findFirst({
+    where: {
+      restaurantId,
+      startsAt: { lt: endsAt },
+      endsAt: { gt: startsAt },
+      status: { notIn: ['COMPLETED', 'CANCELLED'] },
+      menuLockKey: { not: null },
+    },
+    select: { menuLockKey: true },
+  });
+
+  return lockBooking?.menuLockKey || null;
+}
+
+/**
+ * Get the active menu lock for a time window (non-transactional version)
+ * Used by API endpoints that don't run in a transaction
+ */
+export async function getMenuLockForTimeWindow(
+  restaurantId: number,
+  startsAt: Date
+): Promise<string | null> {
+  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+
+  const lockBooking = await prisma.booking.findFirst({
+    where: {
+      restaurantId,
+      startsAt: { lt: endsAt },
+      endsAt: { gt: startsAt },
+      status: { notIn: ['COMPLETED', 'CANCELLED'] },
+      menuLockKey: { not: null },
+    },
+    select: { menuLockKey: true },
+  });
+
+  return lockBooking?.menuLockKey || null;
+}
+
+/**
+ * Check if proposed booking's menu is compatible with existing lock
+ * Returns { compatible: true } or { compatible: false, existingLockKey, reason }
+ *
+ * STRICT MODE: If a lock exists, all bookings MUST have the same menu
+ */
+export async function checkMenuCompatibility(
+  tx: Prisma.TransactionClient,
+  restaurantId: number,
+  startsAt: Date,
+  proposedMenuItems: Array<{ menuItemId: number }>
+): Promise<
+  | { compatible: true }
+  | { compatible: false; existingLockKey: string; reason: string }
+> {
+  const existingLock = await getMenuLock(tx, restaurantId, startsAt);
+
+  // No lock exists yet - any menu (or no menu) is acceptable
+  if (!existingLock) {
+    return { compatible: true };
+  }
+
+  // Lock exists but new booking has no menu items - REJECT
+  if (proposedMenuItems.length === 0) {
+    return {
+      compatible: false,
+      existingLockKey: existingLock,
+      reason: 'This time slot requires menu selection',
+    };
+  }
+
+  // Generate lock key for proposed booking
+  const proposedLockKey = generateMenuLockKey(proposedMenuItems[0].menuItemId);
+
+  // Check if proposed menu matches existing lock
+  if (proposedLockKey !== existingLock) {
+    return {
+      compatible: false,
+      existingLockKey: existingLock,
+      reason: 'Different menu selected',
+    };
+  }
+
+  return { compatible: true };
 }
 
 /**

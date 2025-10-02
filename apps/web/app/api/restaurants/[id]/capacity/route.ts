@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getRestaurantTablesAvailability,
   calculateAvailableSeats,
-  createStartsAt
+  createStartsAt,
+  getMenuLockForTimeWindow,
 } from '@/lib/booking-utils';
 
 /**
@@ -56,6 +57,9 @@ export async function GET(
     // Get detailed table-by-table breakdown
     const tablesAvailability = await getRestaurantTablesAvailability(restaurantId, startsAt);
 
+    // Get menu lock for this time window
+    const menuLockKey = await getMenuLockForTimeWindow(restaurantId, startsAt);
+
     return NextResponse.json({
       restaurant: {
         totalCapacity: restaurantCapacity.totalCapacity,
@@ -75,11 +79,19 @@ export async function GET(
         occupancyRate: table.totalCapacity > 0
           ? Math.round((table.bookedSeats / table.totalCapacity) * 100)
           : 0,
+        // Menu lock info (applies to all tables in this time window)
+        menuLocked: !!menuLockKey,
+        lockKey: menuLockKey,
       })),
       timeWindow: {
         startsAt: startsAt.toISOString(),
         endsAt: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
         duration: '2 hours',
+      },
+      // Top-level menu lock information for the entire time window
+      menuLock: {
+        isLocked: !!menuLockKey,
+        lockKey: menuLockKey,
       },
     });
   } catch (error: any) {

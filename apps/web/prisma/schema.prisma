@@ -264,6 +264,11 @@ model Booking {
   discountedTotal Float  @default(0) // total after discount
   discountPercent Int    @default(0) // discount percentage applied (0-100)
 
+  /// Menu lock key for enforcing menu consistency within time windows
+  /// Format: "menu_<menuItemId>" where menuItemId is the first item in the booking
+  /// All bookings in the same 2-hour window must have the same menuLockKey (or null)
+  menuLockKey  String?
+
   status       BookingStatus  @default(BOOKED)
   cancelledAt  DateTime?
   cancellationReason String?
@@ -285,6 +290,9 @@ model Booking {
   @@index([tableId, startsAt])
   @@index([restaurantId, status, startsAt])
   @@index([customerId, status, startsAt])
+
+  /// Index for menu lock queries - fast lookup of active locks in time window
+  @@index([restaurantId, startsAt, menuLockKey])
 
   /// Optional guard: avoid duplicate bookings by the SAME customer for the SAME table & hour.
   /// (Seat capacity is still enforced in app logic.)
