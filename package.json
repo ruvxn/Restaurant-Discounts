@@ -1,4 +1,9 @@
 {
+  "name": "restaurant-discounts",
+  "version": "1.0.0",
+  "scripts": {
+    "zip": "git archive -o restaurant-discounts.zip HEAD"
+  },
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

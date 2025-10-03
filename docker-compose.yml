@@ -1,0 +1,56 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: restaurant-postgres
+    environment:
+      POSTGRES_USER: restaurant_user
+      POSTGRES_PASSWORD: restaurant_pass
+      POSTGRES_DB: restaurant_discounts
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restaurant_user -d restaurant_discounts"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  model-server:
+    build:
+      context: ./services/model-server
+      dockerfile: Dockerfile
+    container_name: restaurant-model-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/model-server:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: restaurant-web
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      DATABASE_URL: postgresql://restaurant_user:restaurant_pass@postgres:5432/restaurant_discounts?schema=public
+      MODEL_SERVER_URL: http://model-server:8000
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      model-server:
+        condition: service_started
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run dev"
+
+volumes:
+  postgres_data:

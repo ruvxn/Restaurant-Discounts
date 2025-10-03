@@ -1,5 +1,7 @@
 # Setup Guide
 
+> **Windows Users**: We recommend using [Docker Setup](DOCKER_SETUP.md) - it's much easier and avoids PostgreSQL installation issues.
+
 ## Prerequisites
 
 - **Node.js** 18+ and npm
