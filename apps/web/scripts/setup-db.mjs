@@ -91,11 +91,21 @@ function runPsql(sql) {
   try {
     execSync(`psql ${args.map(a => `"${a}"`).join(' ')}`, {
       env,
-      stdio: 'ignore',
+      stdio: ['pipe', 'pipe', 'pipe'],
       shell: true,
+      encoding: 'utf-8',
     });
   } catch (error) {
-    die(`psql failed while executing: ${sql}`);
+    fail(`psql failed while executing: ${sql}`);
+    if (error.stderr) {
+      fail(`PostgreSQL error: ${error.stderr.toString().trim()}`);
+    }
+    fail('\nTroubleshooting:');
+    fail('1. Test connection: psql -U postgres -c "SELECT 1;"');
+    fail('2. Set password: set PGPASSWORD=your_postgres_password (Windows) or export PGPASSWORD=... (Mac/Linux)');
+    fail('3. Windows: Check pg_hba.conf uses "md5" or "trust" for localhost');
+    fail(`4. Manual test: psql -U ${config.PGUSER} -h ${config.DB_HOST} -p ${config.DB_PORT} postgres`);
+    process.exit(1);
   }
 }
 

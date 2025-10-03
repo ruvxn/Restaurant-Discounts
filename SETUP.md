@@ -137,6 +137,49 @@ uvicorn app:app --reload --port 8000
 2. Add `C:\Program Files\PostgreSQL\16\bin` to your System PATH
 3. Restart your terminal/IDE
 
+### Database Setup Fails (Authentication Error)
+
+**Test your connection first:**
+```cmd
+psql -U postgres -c "SELECT 1;"
+```
+
+If this prompts for a password or fails, you need to set PGPASSWORD:
+
+**Windows (Command Prompt):**
+```cmd
+set PGPASSWORD=your_postgres_password
+npm run db:setup
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:PGPASSWORD="your_postgres_password"
+npm run db:setup
+```
+
+**Mac/Linux:**
+```bash
+export PGPASSWORD=your_postgres_password
+npm run db:setup
+```
+
+**If you forgot your postgres password:**
+
+Windows - Reset via pg_hba.conf:
+1. Open "Services" → Find "postgresql-x64-16" → Stop service
+2. Edit `C:\Program Files\PostgreSQL\16\data\pg_hba.conf`
+3. Find this line:
+   ```
+   host    all             all             127.0.0.1/32            md5
+   ```
+   Change `md5` to `trust`
+4. Restart PostgreSQL service
+5. Run: `psql -U postgres -c "ALTER USER postgres PASSWORD 'newpassword';"`
+6. Change `trust` back to `md5` in pg_hba.conf
+7. Restart service again
+8. Set: `set PGPASSWORD=newpassword` and retry setup
+
 ### Database Connection Errors
 - Check PostgreSQL is running: `psql -U postgres -c "SELECT version();"`
 - Verify DATABASE_URL in `.env` matches your credentials
