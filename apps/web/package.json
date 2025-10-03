@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "dev:all": "concurrently \"npm run dev\" \"cd ../../services/model-server && uvicorn app:app --reload --port 8000\"",
+    "db:setup": "node scripts/setup-db.mjs",
     "db:migrate": "npx prisma migrate dev",
     "db:seed": "npx prisma db seed",
     "db:reset": "npx prisma migrate reset"
