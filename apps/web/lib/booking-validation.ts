@@ -24,6 +24,7 @@ export const createBookingSchema = z.object({
   bookingTime: z.coerce.number().int().min(0).max(23),
   partySize: z.coerce.number().int().min(1).max(20),
   menuItems: z.array(menuItemInputSchema).max(50).optional().default([]),
+  tableId: z.coerce.number().int().positive().optional(), // Optional table selection
 });
 
 export const updateBookingSchema = z

@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       bookingTime, // hour (0-23)
       partySize: partySizeData,
       menuItems,
+      tableId: requestedTableId, // Optional user-selected table
     } = parsed.data;
 
     restaurantIdInt = restaurantId;
@@ -146,29 +147,88 @@ export async function POST(req: NextRequest) {
 
     // Use transaction with row-level locking to ensure data consistency
     const booking = await prisma.$transaction(async (tx) => {
-      // Find available table with row-level locking (FOR UPDATE)
-      const tableId = await findAvailableTable(tx, restaurantIdInt, startsAt, partySize);
+      let tableId: number;
+      const primaryMenuItemId = menuItems.length > 0 ? menuItems[0].menuItemId : null;
 
-      if (!tableId) {
-        throw new BookingValidationError(
-          BookingError.NO_TABLES,
-          `No available tables for party of ${partySize}. Please try a different time or reduce party size.`
+      if (requestedTableId) {
+        // User selected a specific table - verify it's available
+        const requestedTable = await tx.diningTable.findUnique({
+          where: { id: requestedTableId },
+        });
+
+        if (!requestedTable || requestedTable.restaurantId !== restaurantIdInt) {
+          throw new BookingValidationError(
+            BookingError.INVALID_TABLE,
+            'The selected table is invalid for this restaurant.'
+          );
+        }
+
+        if (requestedTable.seatingCap < partySize) {
+          throw new BookingValidationError(
+            BookingError.PARTY_TOO_LARGE,
+            `The selected table (capacity: ${requestedTable.seatingCap}) cannot accommodate your party of ${partySize}.`
+          );
+        }
+
+        // Check if table has enough available seats for this time slot
+        const existingBookings = await tx.booking.findMany({
+          where: {
+            tableId: requestedTableId,
+            status: 'BOOKED',
+            startsAt: {
+              lt: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000),
+            },
+            endsAt: {
+              gt: startsAt,
+            },
+          },
+        });
+
+        const bookedSeats = existingBookings.reduce((sum, b) => sum + b.partySize, 0);
+        const availableSeats = requestedTable.seatingCap - bookedSeats;
+
+        if (availableSeats < partySize) {
+          throw new BookingValidationError(
+            BookingError.CAPACITY_EXCEEDED,
+            `The selected table only has ${availableSeats} available seats for this time slot.`
+          );
+        }
+
+        tableId = requestedTableId;
+      } else {
+        // Auto-assign table using existing logic
+        const foundTableId = await findAvailableTable(
+          tx,
+          restaurantIdInt,
+          startsAt,
+          partySize,
+          primaryMenuItemId
         );
+
+        if (!foundTableId) {
+          throw new BookingValidationError(
+            BookingError.NO_TABLES,
+            `No available tables for party of ${partySize}. Please try a different time or reduce party size.`
+          );
+        }
+
+        tableId = foundTableId;
       }
 
       // Check menu lock compatibility (STRICT MODE: menu required if lock exists)
       const compatibility = await checkMenuCompatibility(
         tx,
         restaurantIdInt,
+        tableId,
         startsAt,
         menuItems
       );
 
       if (!compatibility.compatible) {
         const message =
-          compatibility.reason === 'This time slot requires menu selection'
-            ? `This time slot requires menu selection. Other guests have already selected ${compatibility.existingLockKey}. Please select the same menu.`
-            : `This time slot is reserved for ${compatibility.existingLockKey}. Please choose a different time or select the same menu.`;
+          compatibility.reason === 'MENU_REQUIRED'
+            ? `This table already has guests who selected ${compatibility.existingLockKey}. Please choose that set menu before booking.`
+            : `This table is reserved for ${compatibility.existingLockKey}. Please choose a different table or select the same menu.`;
 
         throw new BookingValidationError(BookingError.MENU_LOCKED, message);
       }
@@ -197,9 +257,7 @@ export async function POST(req: NextRequest) {
       console.log('=== END DEBUG ===');
 
       // Generate menu lock key if menu items are present
-      const menuLockKey = menuItems.length > 0
-        ? generateMenuLockKey(menuItems[0].menuItemId)
-        : null;
+      const menuLockKey = primaryMenuItemId ? generateMenuLockKey(primaryMenuItemId) : null;
 
       console.log('[Menu Lock] Generated lock key:', menuLockKey);
 

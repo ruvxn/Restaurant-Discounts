@@ -3,6 +3,8 @@ import { BookingError, BookingValidationError } from './booking-errors';
 
 const prisma = new PrismaClient();
 
+type PrismaClientLike = Prisma.TransactionClient | PrismaClient;
+
 export interface BookingValidationResult {
   isAvailable: boolean;
   availableSeats: number;
@@ -225,19 +227,18 @@ export function generateMenuLockKey(menuItemId: number): string {
 }
 
 /**
- * Get the active menu lock for a time window at a restaurant
- * Returns the menuLockKey if any BOOKED booking in that window has one
+ * Get the active menu lock for a specific table within a booking window
  */
-export async function getMenuLock(
-  tx: Prisma.TransactionClient,
-  restaurantId: number,
+async function getTableMenuLockForClient(
+  client: PrismaClientLike,
+  tableId: number,
   startsAt: Date
 ): Promise<string | null> {
   const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
 
-  const lockBooking = await tx.booking.findFirst({
+  const lockBooking = await client.booking.findFirst({
     where: {
-      restaurantId,
+      tableId,
       startsAt: { lt: endsAt },
       endsAt: { gt: startsAt },
       status: { notIn: ['COMPLETED', 'CANCELLED'] },
@@ -246,31 +247,22 @@ export async function getMenuLock(
     select: { menuLockKey: true },
   });
 
-  return lockBooking?.menuLockKey || null;
+  return lockBooking?.menuLockKey ?? null;
 }
 
-/**
- * Get the active menu lock for a time window (non-transactional version)
- * Used by API endpoints that don't run in a transaction
- */
-export async function getMenuLockForTimeWindow(
-  restaurantId: number,
+export async function getTableMenuLock(
+  tx: Prisma.TransactionClient,
+  tableId: number,
   startsAt: Date
 ): Promise<string | null> {
-  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+  return getTableMenuLockForClient(tx, tableId, startsAt);
+}
 
-  const lockBooking = await prisma.booking.findFirst({
-    where: {
-      restaurantId,
-      startsAt: { lt: endsAt },
-      endsAt: { gt: startsAt },
-      status: { notIn: ['COMPLETED', 'CANCELLED'] },
-      menuLockKey: { not: null },
-    },
-    select: { menuLockKey: true },
-  });
-
-  return lockBooking?.menuLockKey || null;
+export async function getTableMenuLockOutsideTransaction(
+  tableId: number,
+  startsAt: Date
+): Promise<string | null> {
+  return getTableMenuLockForClient(prisma, tableId, startsAt);
 }
 
 /**
@@ -282,37 +274,47 @@ export async function getMenuLockForTimeWindow(
 export async function checkMenuCompatibility(
   tx: Prisma.TransactionClient,
   restaurantId: number,
+  tableId: number,
   startsAt: Date,
   proposedMenuItems: Array<{ menuItemId: number }>
 ): Promise<
   | { compatible: true }
-  | { compatible: false; existingLockKey: string; reason: string }
+  | { compatible: false; existingLockKey: string; reason: 'MENU_REQUIRED' | 'MENU_MISMATCH' }
 > {
-  const existingLock = await getMenuLock(tx, restaurantId, startsAt);
+  // Ensure table belongs to restaurant to prevent inconsistent data
+  const table = await tx.diningTable.findUnique({
+    where: { id: tableId },
+    select: { restaurantId: true },
+  });
 
-  // No lock exists yet - any menu (or no menu) is acceptable
+  if (!table || table.restaurantId !== restaurantId) {
+    throw new BookingValidationError(
+      BookingError.INVALID_TABLE,
+      'The selected table is invalid for this restaurant.'
+    );
+  }
+
+  const existingLock = await getTableMenuLock(tx, tableId, startsAt);
+
   if (!existingLock) {
     return { compatible: true };
   }
 
-  // Lock exists but new booking has no menu items - REJECT
   if (proposedMenuItems.length === 0) {
     return {
       compatible: false,
       existingLockKey: existingLock,
-      reason: 'This time slot requires menu selection',
+      reason: 'MENU_REQUIRED',
     };
   }
 
-  // Generate lock key for proposed booking
   const proposedLockKey = generateMenuLockKey(proposedMenuItems[0].menuItemId);
 
-  // Check if proposed menu matches existing lock
   if (proposedLockKey !== existingLock) {
     return {
       compatible: false,
       existingLockKey: existingLock,
-      reason: 'Different menu selected',
+      reason: 'MENU_MISMATCH',
     };
   }
 
@@ -514,6 +516,8 @@ export async function getRestaurantTablesAvailability(
   totalCapacity: number;
   availableSeats: number;
   bookedSeats: number;
+  menuLockKey: string | null;
+  menuLockName: string | null;
 }>> {
   const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
 
@@ -531,7 +535,13 @@ export async function getRestaurantTablesAvailability(
   });
 
   // Get all overlapping bookings for this restaurant
-  const bookings = await prisma.booking.findMany({
+  const bookings: Array<{
+    tableId: number;
+    partySize: number;
+    startsAt: Date;
+    endsAt: Date;
+    menuLockKey: string | null;
+  }> = await prisma.booking.findMany({
     where: {
       restaurantId,
       startsAt: {
@@ -549,11 +559,12 @@ export async function getRestaurantTablesAvailability(
       partySize: true,
       startsAt: true,
       endsAt: true,
+      menuLockKey: true,
     },
   });
 
   // Group bookings by table
-  const bookingsByTable = new Map<number, Array<typeof bookings[0]>>();
+  const bookingsByTable = new Map<number, Array<(typeof bookings)[number]>>();
   bookings.forEach((booking) => {
     if (!bookingsByTable.has(booking.tableId)) {
       bookingsByTable.set(booking.tableId, []);
@@ -561,8 +572,9 @@ export async function getRestaurantTablesAvailability(
     bookingsByTable.get(booking.tableId)!.push(booking);
   });
 
-  // Calculate availability for each table
-  return tables.map((table) => {
+  const lockMenuIds = new Set<number>();
+
+  const tablesWithLockMeta = tables.map((table) => {
     const tableBookings = bookingsByTable.get(table.id) || [];
 
     if (tableBookings.length === 0) {
@@ -572,10 +584,18 @@ export async function getRestaurantTablesAvailability(
         totalCapacity: table.seatingCap,
         availableSeats: table.seatingCap,
         bookedSeats: 0,
+        menuLockKey: null,
+        menuLockId: null,
       };
     }
 
     const maxOccupancy = getMaxOccupancyDuringWindow(tableBookings, startsAt, endsAt);
+    const activeLockKey = tableBookings.find((booking) => booking.menuLockKey)?.menuLockKey ?? null;
+    const lockMenuId = activeLockKey ? parseMenuItemIdFromLockKey(activeLockKey) : null;
+
+    if (lockMenuId) {
+      lockMenuIds.add(lockMenuId);
+    }
 
     return {
       tableId: table.id,
@@ -583,8 +603,38 @@ export async function getRestaurantTablesAvailability(
       totalCapacity: table.seatingCap,
       availableSeats: Math.max(0, table.seatingCap - maxOccupancy),
       bookedSeats: maxOccupancy,
+      menuLockKey: activeLockKey,
+      menuLockId: lockMenuId,
     };
   });
+
+  const menuLockNames = new Map<number, string>();
+  if (lockMenuIds.size > 0) {
+    const menuItems = await prisma.menuItem.findMany({
+      where: { id: { in: Array.from(lockMenuIds) } },
+      select: { id: true, name: true },
+    });
+    menuItems.forEach((item) => {
+      menuLockNames.set(item.id, item.name);
+    });
+  }
+
+  return tablesWithLockMeta.map((table) => ({
+    tableId: table.tableId,
+    tableLabel: table.tableLabel,
+    totalCapacity: table.totalCapacity,
+    availableSeats: table.availableSeats,
+    bookedSeats: table.bookedSeats,
+    menuLockKey: table.menuLockKey,
+    menuLockName: table.menuLockId ? menuLockNames.get(table.menuLockId) ?? null : null,
+  }));
+}
+
+function parseMenuItemIdFromLockKey(lockKey: string | null): number | null {
+  if (!lockKey) return null;
+  if (!lockKey.startsWith('menu_')) return null;
+  const numericPart = Number(lockKey.replace('menu_', ''));
+  return Number.isNaN(numericPart) ? null : numericPart;
 }
 
 /**
@@ -608,7 +658,8 @@ export async function findAvailableTable(
   tx: Prisma.TransactionClient,
   restaurantId: number,
   startsAt: Date,
-  partySize: number
+  partySize: number,
+  proposedMenuItemId?: number | null
 ): Promise<number | null> {
   const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
 
@@ -646,8 +697,23 @@ export async function findAvailableTable(
         partySize: true,
         startsAt: true,
         endsAt: true,
+        menuLockKey: true,
       },
     });
+
+    const existingLockKey = overlappingBookings.find((booking) => booking.menuLockKey)?.menuLockKey ?? null;
+
+    if (existingLockKey) {
+      if (!proposedMenuItemId) {
+        // Table already locked to a menu; cannot auto-assign without matching menu
+        continue;
+      }
+
+      const proposedLockKey = generateMenuLockKey(proposedMenuItemId);
+      if (proposedLockKey !== existingLockKey) {
+        continue;
+      }
+    }
 
     // Calculate maximum concurrent occupancy across the entire time window
     const maxOccupancy = calculateMaxConcurrentOccupancy(
@@ -671,7 +737,7 @@ export async function findAvailableTable(
  * This checks every moment in time to find the peak occupancy
  */
 function calculateMaxConcurrentOccupancy(
-  existingBookings: Array<{ id: number; partySize: number; startsAt: Date; endsAt: Date }>,
+  existingBookings: Array<{ id: number; partySize: number; startsAt: Date; endsAt: Date; menuLockKey?: string | null }>,
   newStartsAt: Date,
   newEndsAt: Date,
   newPartySize: number

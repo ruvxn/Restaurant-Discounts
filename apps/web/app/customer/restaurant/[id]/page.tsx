@@ -6,6 +6,8 @@ import { use } from "react";
 import CustomerNav from "@/components/CustomerNav";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import SeatingSelector from "@/components/SeatingSelector";
+import type { Table as SeatingSelectorTable } from "@/components/SeatingSelector";
 import styles from "../Restaurant.module.css";
 
 type MenuItem = {
@@ -66,6 +68,8 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [capacityTables, setCapacityTables] = useState<SeatingSelectorTable[]>([]);
+  const [loadingCapacity, setLoadingCapacity] = useState(false);
 
   useEffect(() => {
     async function fetchRestaurantData() {
@@ -104,7 +108,8 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
       for (const discount of discounts) {
         try {
           const response = await fetch(
-            `/api/restaurants/${resolvedParams.id}/availability?date=${selectedDate.toISOString()}&hour=${discount.hour}`
+            `/api/restaurants/${resolvedParams.id}/availability?date=${selectedDate.toISOString()}&hour=${discount.hour}`,
+            { cache: 'no-store' }
           );
           if (response.ok) {
             const data = await response.json();
@@ -145,6 +150,45 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
     }
   }, [selectedDate, discounts, restaurant, resolvedParams.id]);
 
+  // Fetch table capacity data for SeatingSelector
+  useEffect(() => {
+    if (!selectedSlot || !restaurant) return;
+
+    async function fetchCapacity() {
+      setLoadingCapacity(true);
+      try {
+        const dateParam = selectedDate.toISOString().split('T')[0];
+        const response = await fetch(
+          `/api/restaurants/${resolvedParams.id}/capacity?date=${dateParam}&hour=${selectedSlot.hour}`,
+          { cache: 'no-store' }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const transformedTables: SeatingSelectorTable[] = data.tables.map((table: any) => ({
+            id: table.id,
+            label: table.label,
+            totalCapacity: table.totalCapacity,
+            availableSeats: table.availableSeats,
+            bookedSeats: table.bookedSeats,
+            isAvailable: table.isAvailable,
+            occupancyRate: table.occupancyRate,
+            menuLocked: table.menuLocked || false,
+            lockKey: table.lockKey || null,
+            lockMenuName: table.lockMenuName || null,
+          }));
+          setCapacityTables(transformedTables);
+        }
+      } catch (err) {
+        console.error('Error fetching capacity:', err);
+      } finally {
+        setLoadingCapacity(false);
+      }
+    }
+
+    fetchCapacity();
+  }, [selectedSlot, selectedDate, restaurant, resolvedParams.id]);
+
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   const formatTime = (hour: number) => {
@@ -168,7 +212,13 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
   const selectedDateValue = selectedDate.toISOString().split("T")[0];
 
   const setMenuItems = restaurant?.menuItems.filter(item => item.isSetMenu) || [];
-  const availableTables = restaurant?.tables.filter(table => table.seatingCap >= partySize) || [];
+
+  const parseMenuIdFromLockKey = (lockKey: string | null | undefined): number | null => {
+    if (!lockKey) return null;
+    if (!lockKey.startsWith('menu_')) return null;
+    const numericPart = Number(lockKey.replace('menu_', ''));
+    return Number.isNaN(numericPart) ? null : numericPart;
+  };
 
   const currentDiscount = selectedSlot?.discount || 0;
 
@@ -274,6 +324,7 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
           bookingTime: selectedSlot.hour,
           partySize,
           menuItems: menuItemsPayload,
+          tableId: selectedTable?.id, // Include selected table ID
         }),
       });
 
@@ -569,46 +620,60 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
                 </div>
               )}
 
-              {/* Step 4: Table Selection */}
+              {/* Step 4: Interactive Table Selection */}
               {selectedSlot && (
                 <div style={{ marginBottom: "1.5rem" }}>
                   <label className={styles.label}>
-                    4. Select a table
+                    4. Select a table (interactive floorplan)
                   </label>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "0.75rem" }}>
-                    {availableTables.length > 0 ? (
-                      availableTables.map((table) => {
-                        const isSelected = selectedTable?.id === table.id;
-                        return (
-                          <button
-                            key={table.id}
-                            type="button"
-                            onClick={() => setSelectedTable(table)}
-                            style={{
-                              padding: "1rem",
-                              border: `2px solid ${isSelected ? "#3b82f6" : "#e5e7eb"}`,
-                              borderRadius: "0.5rem",
-                              backgroundColor: isSelected ? "#eff6ff" : "white",
-                              cursor: "pointer",
-                              textAlign: "center",
-                              transition: "all 0.2s",
-                            }}
-                          >
-                            <div style={{ fontWeight: "600", color: "#111827", marginBottom: "0.25rem" }}>
-                              {table.label}
-                            </div>
-                            <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-                              Seats {table.seatingCap}
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div style={{ gridColumn: "1 / -1", padding: "1rem", textAlign: "center", color: "#6b7280" }}>
-                        No tables available for {partySize} {partySize === 1 ? 'guest' : 'guests'}
-                      </div>
-                    )}
-                  </div>
+                  <p style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "1rem" }}>
+                    Hover over tables to see current guests and their interests. Click to select.
+                  </p>
+
+                  {loadingCapacity ? (
+                    <div style={{ padding: "3rem", textAlign: "center", color: "#6b7280", background: "#f9fafb", borderRadius: "0.5rem" }}>
+                      Loading table availability...
+                    </div>
+                  ) : capacityTables.length > 0 ? (
+                    <SeatingSelector
+                      restaurantId={Number(resolvedParams.id)}
+                      date={selectedDate.toISOString().split('T')[0]}
+                      hour={selectedSlot.hour}
+                      tables={capacityTables}
+                      selectedTableId={selectedTable?.id}
+                      onTableSelect={(table) => {
+                        const tableLockMenuId = parseMenuIdFromLockKey(table.lockKey);
+
+                        if (table.menuLocked) {
+                          if (!tableLockMenuId) {
+                            toast.error('This table is currently locked to a specific menu. Please select the required set menu to continue.');
+                            return;
+                          }
+
+                          if (!selectedSetMenu) {
+                            const lockedName = restaurant?.menuItems.find(item => item.id === tableLockMenuId)?.name || `Menu ${tableLockMenuId}`;
+                            toast.error(`This table is reserved for ${lockedName}. Select that menu before choosing the table.`);
+                            return;
+                          }
+
+                          if (selectedSetMenu !== tableLockMenuId) {
+                            const lockedName = restaurant?.menuItems.find(item => item.id === tableLockMenuId)?.name || `Menu ${tableLockMenuId}`;
+                            toast.error(`This table is reserved for ${lockedName}. Please switch your selection to match.`);
+                            return;
+                          }
+                        }
+
+                        const originalTable = restaurant?.tables.find(t => t.id === table.id);
+                        if (originalTable) {
+                          setSelectedTable(originalTable);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div style={{ padding: "2rem", textAlign: "center", color: "#6b7280", background: "#f9fafb", borderRadius: "0.5rem" }}>
+                      No tables available for this time slot.
+                    </div>
+                  )}
                 </div>
               )}
 

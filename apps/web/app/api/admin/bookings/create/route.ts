@@ -8,6 +8,8 @@ import {
   hourToTimeString,
   createStartsAt,
   findAvailableTable,
+  checkMenuCompatibility,
+  generateMenuLockKey,
 } from '@/lib/booking-utils';
 import { z } from 'zod';
 
@@ -84,11 +86,35 @@ export async function POST(req: NextRequest) {
 
     // Create booking in transaction
     const booking = await prisma.$transaction(async (tx) => {
+      const primaryMenuItemId = menuItems.length > 0 ? menuItems[0].menuItemId : null;
+
       // Find available table
-      const tableId = await findAvailableTable(tx, restaurantId, startsAt, partySize);
+      const tableId = await findAvailableTable(
+        tx,
+        restaurantId,
+        startsAt,
+        partySize,
+        primaryMenuItemId
+      );
 
       if (!tableId) {
         throw new Error('No available tables for the selected time and party size');
+      }
+
+      const compatibility = await checkMenuCompatibility(
+        tx,
+        restaurantId,
+        tableId,
+        startsAt,
+        menuItems
+      );
+
+      if (!compatibility.compatible) {
+        throw new Error(
+          compatibility.reason === 'MENU_REQUIRED'
+            ? `Table is locked to ${compatibility.existingLockKey}; please select that menu.`
+            : `Table is reserved for ${compatibility.existingLockKey}.`
+        );
       }
 
       // Get discount
@@ -116,6 +142,7 @@ export async function POST(req: NextRequest) {
           originalTotal: pricing.originalTotal,
           discountedTotal: pricing.discountedTotal,
           discountPercent,
+          menuLockKey: primaryMenuItemId ? generateMenuLockKey(primaryMenuItemId) : null,
           status: 'BOOKED',
         },
       });

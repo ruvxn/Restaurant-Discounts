@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import CustomerNav from '@/components/CustomerNav';
 import MenuItemSelector from '@/components/MenuItemSelector';
@@ -498,8 +498,11 @@ function ModifyBookingModal({ booking, onClose, onUpdated }: ModifyBookingModalP
   );
 }
 
-export default function BookingConfirmationPage({ params }: { params: { id: string } }) {
+export default function BookingConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const unwrappedParams = use(params);
+  const bookingId = unwrappedParams.id;
+
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -508,7 +511,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
 
   const fetchBooking = async () => {
     try {
-      const response = await fetch(`/api/bookings/${params.id}`);
+      const response = await fetch(`/api/bookings/${bookingId}`);
       if (!response.ok) {
         throw new Error('Booking not found');
       }
@@ -532,7 +535,7 @@ export default function BookingConfirmationPage({ params }: { params: { id: stri
   useEffect(() => {
     fetchBooking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [bookingId]);
 
   const savings = useMemo(() => {
     if (!booking) return 0;

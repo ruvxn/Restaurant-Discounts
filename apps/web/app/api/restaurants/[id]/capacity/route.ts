@@ -3,8 +3,10 @@ import {
   getRestaurantTablesAvailability,
   calculateAvailableSeats,
   createStartsAt,
-  getMenuLockForTimeWindow,
 } from '@/lib/booking-utils';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 /**
  * GET /api/restaurants/[id]/capacity
@@ -57,9 +59,6 @@ export async function GET(
     // Get detailed table-by-table breakdown
     const tablesAvailability = await getRestaurantTablesAvailability(restaurantId, startsAt);
 
-    // Get menu lock for this time window
-    const menuLockKey = await getMenuLockForTimeWindow(restaurantId, startsAt);
-
     return NextResponse.json({
       restaurant: {
         totalCapacity: restaurantCapacity.totalCapacity,
@@ -69,20 +68,24 @@ export async function GET(
           ? Math.round((restaurantCapacity.bookedSeats / restaurantCapacity.totalCapacity) * 100)
           : 0,
       },
-      tables: tablesAvailability.map(table => ({
-        id: table.tableId,
-        label: table.tableLabel,
-        totalCapacity: table.totalCapacity,
-        availableSeats: table.availableSeats,
-        bookedSeats: table.bookedSeats,
-        isAvailable: table.availableSeats > 0,
-        occupancyRate: table.totalCapacity > 0
-          ? Math.round((table.bookedSeats / table.totalCapacity) * 100)
-          : 0,
-        // Menu lock info (applies to all tables in this time window)
-        menuLocked: !!menuLockKey,
-        lockKey: menuLockKey,
-      })),
+      tables: tablesAvailability.map(table => {
+        const hasMenuLock = !!table.menuLockKey;
+        return {
+          id: table.tableId,
+          label: table.tableLabel,
+          totalCapacity: table.totalCapacity,
+          availableSeats: table.availableSeats,
+          bookedSeats: table.bookedSeats,
+          isAvailable: table.availableSeats > 0,
+          occupancyRate: table.totalCapacity > 0
+            ? Math.round((table.bookedSeats / table.totalCapacity) * 100)
+            : 0,
+          // Menu lock info now scoped per table
+          menuLocked: hasMenuLock,
+          lockKey: hasMenuLock ? table.menuLockKey : null,
+          lockMenuName: hasMenuLock ? table.menuLockName : null,
+        };
+      }),
       timeWindow: {
         startsAt: startsAt.toISOString(),
         endsAt: new Date(startsAt.getTime() + 2 * 60 * 60 * 1000).toISOString(),
@@ -90,15 +93,25 @@ export async function GET(
       },
       // Top-level menu lock information for the entire time window
       menuLock: {
-        isLocked: !!menuLockKey,
-        lockKey: menuLockKey,
+        isLocked: tablesAvailability.some(table => !!table.menuLockKey),
+        lockKey: null,
+      },
+    }, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error: any) {
     console.error('Error fetching capacity:', error);
     return NextResponse.json(
       { error: 'Failed to fetch capacity', details: error.message },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
     );
   }
 }
