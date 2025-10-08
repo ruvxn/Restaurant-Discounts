@@ -50,7 +50,7 @@ services:
         condition: service_healthy
       model-server:
         condition: service_started
-    command: sh -c "npx prisma migrate deploy && (npx prisma db seed || true) && npm run dev"
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 
 volumes:
   postgres_data:
