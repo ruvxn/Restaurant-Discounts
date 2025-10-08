@@ -1,143 +1,320 @@
-# Restaurant-Discounts
+# Restaurant Discounts Management System
 
+A full-stack restaurant booking and dynamic discount management platform that uses machine learning to optimize restaurant occupancy and revenue through intelligent discount recommendations.
+
+## Overview
+
+This system helps restaurants maximize revenue by dynamically offering discounts during predicted low-demand periods. It combines a Next.js web application with a Python-based machine learning service to predict customer demand and generate optimal discount strategies.
+
+## Key Features
+
+### For Customers
+- Browse restaurants and view available discounts
+- Real-time table availability checking
+- Book tables with automatic discount application
+- Support for group bookings and table sharing
+- Birthday discount eligibility tracking
+
+### For Restaurant Admins
+- Dashboard for managing bookings and table assignments
+- View predicted demand and generated discount recommendations
+- Manual discount approval and adjustment
+- Track booking statistics and revenue metrics
+- Menu management with category-based organization
+- Table capacity and configuration management
+
+### ML-Powered Discount System
+- Predicts customer demand 7 days in advance
+- Generates discount recommendations (5-30%) for low-demand periods
+- Uses Histogram Gradient Boosting Regression (HGBR) trained on historical data
+- Considers factors: day of week, hour, weather, holidays, past bookings
+- Separate models trained per restaurant for personalized predictions
+
+## Tech Stack
+
+### Frontend & API
+- **Next.js 15** (App Router) - Server-side rendering and API routes
+- **React 19** - UI components
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Prisma** - Database ORM and migrations
+- **PostgreSQL** - Relational database
+
+### ML Service
+- **Python 3.11** - Runtime
+- **FastAPI** - REST API framework
+- **scikit-learn** - Machine learning models
+- **pandas/numpy** - Data processing
+- **joblib** - Model serialization
+
+### Infrastructure
+- **Docker & Docker Compose** - Containerization and orchestration
+- **PostgreSQL 16** - Production database
+
+## Project Structure
+
+```
 Restaurant-Discounts/
-├─ apps/
-│ └─ web/ # Next.js (App Router) app — UI + API routes
-│ ├─ app/ # App Router tree (routes = folders)
-│ │ ├─ layout.tsx # global shell (fonts, <html>, <body>, providers)
-│ │ ├─ page.tsx # "/" – restaurant list (links to details)
-│ │ ├─ admin/ # "/admin" – manual refresh UI (dev only)
-│ │ │ └─ page.tsx # date input + POST /api/admin/refresh
-│ │ └─ restaurants/
-│ │ └─ [id]/ # "/restaurants/:id" – restaurant details
-│ │ ├─ page.tsx # server-render discounts table (+date switcher)
-│ │ ├─ loading.tsx # optional skeleton while route loads
-│ │ └─ error.tsx # optional error boundary for this route
-│ │
-│ │ └─ api/ # Server-only route handlers (Edge/Node)
-│ │ ├─ admin/
-│ │ │ └─ refresh/route.ts # POST: bulk refresh via model-server
-│ │ └─ restaurants/
-│ │ └─ [id]/
-│ │ └─ discounts/route.ts # GET: read by date; POST: save accepted rows
-│ │
-│ ├─ public/ # Static assets (svgs, icons, etc.)
-│ │ └─ favicon.ico
-│ ├─ src/
-│ │ ├─ lib/ # shared logic (isomorphic/server utils)
-│ │ │ ├─ fetchers.ts # server/client fetch helpers (discounts, refresh)
-│ │ │ ├─ modelServer.ts # client to FastAPI /v1/generate
-│ │ │ ├─ restaurants.ts # in-memory catalog + openingHoursToList()
-│ │ │ ├─ store.ts # temp in-mem persistence (to be Prisma)
-│ │ │ └─ time.ts # todayYMD(), date helpers
-│ │ └─ ui/ # small building blocks (optional)
-│ │ ├─ Button.tsx # basic button
-│ │ ├─ DateInput.tsx # controlled <input type="date" />
-│ │ └─ Table.tsx # simple table wrapper
-│ │
-│ ├─ .env.local # local vars (CRON_SECRET, MODEL_SERVER_URL, etc.)
-│ ├─ .env.example # documented required/optional keys
-│ ├─ next.config.ts
-│ ├─ tsconfig.json
-│ ├─ postcss.config.mjs
-│ ├─ eslint.config.mjs
-│ └─ package.json
+├── apps/
+│   └── web/                    # Next.js application
+│       ├── app/                # App Router pages
+│       │   ├── (auth)/         # Authentication routes
+│       │   ├── (customer)/     # Customer-facing pages
+│       │   ├── (admin)/        # Admin dashboard
+│       │   └── api/            # API route handlers
+│       ├── prisma/
+│       │   ├── schema.prisma   # Database schema
+│       │   ├── migrations/     # Migration history
+│       │   └── seed.mjs        # Database seeding script
+│       └── src/
+│           ├── lib/            # Shared utilities
+│           └── components/     # React components
 │
-├─ services/
-│ └─ model-server/ # Python FastAPI service (ML “brain”)
-│ ├─ app.py # /v1/generate: loads model, builds features, predicts
-│ ├─ models/ # model artifacts registry
-│ │ ├─ pasta-place/
-│ │ │ └─ 0004_customer_demand_pipeline.pkl
-│ │ ├─ sunset-grill/
-│ │ │ └─ 0003_customer_demand_pipeline.pkl
-│ │ └─ sushi-house/
-│ │ └─ 0005_customer_demand_pipeline.pkl
-│ ├─ pasta_place_2YEAR_data.json # training data (kept here for retraining)
-│ ├─ sunset_grill_2YEAR_data.json
-│ ├─ sushi_house_2YEAR_data.json
-│ ├─ train.ipynb # HGBR pipeline + CV + export .pkl via joblib
-│ ├─ requirements.txt # fastapi, uvicorn, scikit-learn, pandas, numpy, joblib…
-│ ├─ venv/ # local venv (gitignored)
-│ └─ README.md # how to run/train the service
+├── services/
+│   └── model-server/           # Python ML service
+│       ├── app.py              # FastAPI application
+│       ├── models/             # Trained model artifacts (.pkl)
+│       │   ├── pasta-place/
+│       │   ├── sunset-grill/
+│       │   └── sushi-house/
+│       ├── train.ipynb         # Model training notebook
+│       └── requirements.txt    # Python dependencies
 │
-├─ prisma/ # (planned) DB schema + migrations
-│ ├─ schema.prisma # restaurants, accepted_discounts, reservations, etc.
-│ ├─ migrations/ # generated by `prisma migrate`
-│ └─ seed.ts # seed dev data
-│
-├─ scripts/ # helper scripts (optional)
-│ ├─ dev.sh # run Next + model-server together
-│ ├─ refresh.sh # curl POST /api/admin/refresh with date/header
-│ └─ train-all.sh # batch training wrapper (notebook or .py)
-│
-├─ .gitignore # node_modules, .next, venv, \*.pkl, .DS_Store, etc.
-└─ README.md # top-level overview & getting-started
+└── docker-compose.yml          # Multi-service orchestration
+```
 
----
+## Database Schema
 
-Restaurant-Discounts/
-├─ apps/
-│ └─ web/ # Next.js frontend + API routes (migrated from React)
-│ ├─ app/ # ✅ already exists, core Next.js "App Router"
-│ │ ├─ layout.tsx # ✅ global shell (html/body/providers) – DONE
-│ │ ├─ page.tsx # ✅ "/" restaurant list page – NEEDS styling/data fetch
-│ │ ├─ admin/ # NEW – manual admin UI
-│ │ │ └─ page.tsx # 🆕 added: form to POST /api/admin/refresh – NEED polish
-│ │ └─ restaurants/
-│ │ └─ [id]/ # ✅ per-restaurant route
-│ │ ├─ page.tsx # 🆕 added: shows discounts table – NEEDS UI work
-│ │ ├─ loading.tsx # 🆕 skeleton loader – optional
-│ │ └─ error.tsx # 🆕 error boundary – optional
-│ │
-│ │ └─ api/ # ✅ Next.js API handlers (already wired to model-server)
-│ │ ├─ admin/
-│ │ │ └─ refresh/route.ts # ✅ bulk refresh – DONE & tested
-│ │ └─ restaurants/
-│ │ └─ [id]/
-│ │ └─ discounts/route.ts # ✅ GET/POST discounts – DONE
-│ │
-│ ├─ public/ # ✅ static assets
-│ │ └─ favicon.ico
-│ ├─ src/
-│ │ ├─ lib/ # ✅ util layer
-│ │ │ ├─ fetchers.ts # 🆕 added: central API fetchers – NEED integration in pages
-│ │ │ ├─ modelServer.ts # ✅ FastAPI client wrapper – DONE
-│ │ │ ├─ restaurants.ts # ✅ restaurant catalog + helpers – DONE
-│ │ │ ├─ store.ts # ✅ in-memory store – TEMP, will swap for Prisma
-│ │ │ └─ time.ts # ✅ date helpers – DONE
-│ │ └─ ui/ # 🆕 new directory for small UI components
-│ │ ├─ Button.tsx # 🆕 scaffolded – NEED to flesh out styles
-│ │ ├─ DateInput.tsx # 🆕 scaffolded – used by admin form
-│ │ └─ Table.tsx # 🆕 scaffolded – used by [id]/page.tsx
-│ │
-│ ├─ .env.local # ✅ already present – NEEDS MODEL_SERVER_URL
-│ ├─ .env.example # ✅ documented keys
-│ ├─ next.config.ts, tsconfig.json, postcss.config.mjs, eslint.config.mjs
-│ └─ package.json # ✅ frontend deps
-│
-├─ services/
-│ └─ model-server/ # ✅ FastAPI ML microservice
-│ ├─ app.py # ✅ FastAPI app (with /v1/generate) – WORKING
-│ ├─ models/ # ✅ trained pipelines (joblib .pkl files)
-│ │ ├─ pasta-place/0004_customer_demand_pipeline.pkl
-│ │ ├─ sunset-grill/0003_customer_demand_pipeline.pkl
-│ │ └─ sushi-house/0005_customer_demand_pipeline.pkl
-│ ├─ \*\_2YEAR_data.json # ✅ datasets (train/test) – ALREADY LOADED
-│ ├─ train.ipynb # ✅ retraining notebook – NEED hyperparam tuning & cleanup
-│ ├─ requirements.txt # ✅ all Python deps
-│ ├─ venv/ # ✅ local-only, gitignored
-│ └─ README.md # 🆕 should add training + run docs – NOT WRITTEN
-│
-├─ prisma/ # 🚧 not yet wired in
-│ ├─ schema.prisma # 🆕 to be written (restaurants, bookings, accepted_discounts)
-│ ├─ migrations/ # empty until first `prisma migrate`
-│ └─ seed.ts # 🆕 placeholder – will seed restaurant + table data
-│
-├─ scripts/ # 🆕 helper scripts (optional but recommended)
-│ ├─ dev.sh # 🆕 run Next + model-server together – NOT WRITTEN
-│ ├─ refresh.sh # 🆕 curl wrapper for /admin/refresh – NOT WRITTEN
-│ └─ train-all.sh # 🆕 batch retrain models – NOT WRITTEN
-│
-├─ .gitignore # ✅ ignoring node_modules, .next, venv, .pkl, etc.
-└─ README.md # 🆕 top-level overview – NOT WRITTEN
+### Core Models
+- **Restaurant** - Restaurant information, hours, capacity
+- **DiningTable** - Table configurations and capacity
+- **Customer** - Customer accounts and preferences
+- **Booking** - Reservation records with status tracking
+- **AcceptedDiscount** - Active discounts per restaurant
+- **Admin** - Restaurant manager accounts
+- **MenuItem** - Menu items with categories and pricing
+
+### Key Relationships
+- Restaurants have many Tables, MenuItems, Bookings, and Admins
+- Bookings link Customers to Tables at specific time slots
+- Bookings can have multiple assigned tables for large groups
+- AcceptedDiscounts are generated by ML and approved by admins
+
+## Getting Started with Docker
+
+### Prerequisites
+- Docker Desktop installed ([Download](https://docs.docker.com/desktop/))
+- 4GB RAM minimum
+- 10GB free disk space
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd Restaurant-Discounts
+   ```
+
+2. **Start all services**
+   ```bash
+   docker-compose up
+   ```
+
+   First time setup takes 2-5 minutes. Docker will:
+   - Create PostgreSQL database
+   - Run database migrations
+   - Seed sample data (3 restaurants, tables, menu items, admin accounts)
+   - Start Next.js development server
+   - Start Python ML service
+
+3. **Access the application**
+   - Frontend: http://localhost:3000
+   - Admin Dashboard: http://localhost:3000/admin/login
+   - ML API Documentation: http://localhost:8000/docs
+   - Database: localhost:5432
+
+### Default Admin Credentials
+
+After seeding, you can log in with these accounts:
+
+**Sushi House Admin**
+- Email: admin@sushihouse.com
+- Password: admin123
+
+**Pasta Place Admin**
+- Email: admin@pastaplace.com
+- Password: admin123
+
+**Sunset Grill Admin**
+- Email: admin@sunsetgrill.com
+- Password: admin123
+
+### Docker Commands
+
+```bash
+# Start services (detached mode)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Reset everything (including database)
+docker-compose down -v
+docker-compose up
+
+# Rebuild after code changes
+docker-compose up --build
+
+# Run database migrations
+docker-compose exec web npx prisma migrate dev
+
+# Access database shell
+docker-compose exec postgres psql -U restaurant_user -d restaurant_discounts
+
+# View specific service logs
+docker-compose logs -f web
+docker-compose logs -f model-server
+```
+
+## API Endpoints
+
+### Customer-Facing
+- `GET /api/restaurants` - List all restaurants
+- `GET /api/restaurants/[id]` - Restaurant details
+- `GET /api/restaurants/[id]/discounts` - Active discounts
+- `GET /api/capacity/check` - Check table availability
+- `POST /api/bookings` - Create booking
+- `GET /api/bookings/[id]` - Booking details
+
+### Admin
+- `POST /api/admin/login` - Admin authentication
+- `GET /api/admin/bookings` - List bookings for restaurant
+- `PATCH /api/admin/bookings/[id]` - Update booking status
+- `POST /api/admin/refresh-discounts` - Trigger ML discount generation
+- `GET /api/admin/dashboard` - Dashboard statistics
+
+### ML Service
+- `POST /v1/generate` - Generate discount recommendations
+  - Input: restaurant_id, start_date, days_ahead
+  - Output: Hourly predictions with discount percentages
+
+## Development Workflow
+
+### Making Code Changes
+
+The Docker setup supports hot-reload for development:
+- Next.js changes auto-reload in the browser
+- Python changes restart the FastAPI service
+- Database changes require migration
+
+### Database Migrations
+
+After modifying `apps/web/prisma/schema.prisma`:
+
+```bash
+docker-compose exec web npx prisma migrate dev --name your_migration_name
+```
+
+### Training New Models
+
+1. Access the model-server container:
+   ```bash
+   docker-compose exec model-server bash
+   ```
+
+2. Start Jupyter or run training script:
+   ```bash
+   jupyter notebook train.ipynb
+   ```
+
+3. New models are saved to `services/model-server/models/`
+
+## Testing
+
+### Sample Data
+
+The seed script creates:
+- 3 restaurants (Sushi House, Pasta Place, Sunset Grill)
+- 15+ tables per restaurant (various capacities)
+- 50+ menu items across categories
+- 3 admin accounts
+- Sample booking data
+
+### Test Scenarios
+
+1. **Customer Flow**
+   - Browse restaurants at http://localhost:3000
+   - Select date/time and party size
+   - View available discounts
+   - Complete booking
+
+2. **Admin Flow**
+   - Login at http://localhost:3000/admin/login
+   - View dashboard and upcoming bookings
+   - Generate discount recommendations
+   - Approve/modify discounts
+
+3. **ML Service**
+   - Visit http://localhost:8000/docs
+   - Try the `/v1/generate` endpoint
+   - Input: `{"restaurant_id": 1, "start_date": "2025-10-10", "days_ahead": 7}`
+
+## Troubleshooting
+
+### Port Conflicts
+
+If ports 3000, 8000, or 5432 are in use, edit `docker-compose.yml`:
+```yaml
+ports:
+  - "3001:3000"  # Change left side to available port
+```
+
+### Database Issues
+
+Reset the database:
+```bash
+docker-compose down -v
+docker-compose up
+```
+
+### Build Failures
+
+Clear Docker cache and rebuild:
+```bash
+docker-compose down
+docker system prune -a
+docker-compose up --build
+```
+
+## Production Deployment
+
+For production deployment:
+
+1. Set environment variables for production
+2. Use production database credentials
+3. Build optimized Next.js bundle
+4. Configure proper CORS policies
+5. Set up SSL/TLS certificates
+6. Use production-ready ML model versions
+
+See `DOCKER_SETUP.md` for detailed deployment instructions.
+
+## Documentation
+
+- `DOCKER_SETUP.md` - Complete Docker setup guide
+- `SETUP.md` - Manual setup without Docker
+- `BOOKING_SYSTEM_SUMMARY.md` - Booking system architecture
+- `TABLE_BOOKING_RULES.md` - Table assignment logic
+- `CAPACITY_API_GUIDE.md` - Capacity checking implementation
+- `ADMIN_DASHBOARD_SUMMARY.md` - Admin features overview
+
+## License
+
+This project is for educational purposes.
+
+## Contributors
+
+Built as a demonstration of full-stack development with ML integration.
