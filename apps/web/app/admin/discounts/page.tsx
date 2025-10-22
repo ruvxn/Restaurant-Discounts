@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import DiscountOverrideModal from '@/components/admin/DiscountOverrideModal';
+import { formatDateLocal } from '@/src/lib/time';
 import styles from './AdminDiscounts.module.css';
 
 interface Discount {
@@ -25,8 +26,10 @@ export default function AdminDiscountsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState('');
+  // OLD: const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // NEW: Use formatDateLocal to avoid timezone conversion issues
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
+    formatDateLocal(new Date())
   );
   const [editedDiscounts, setEditedDiscounts] = useState<Record<number, number>>({});
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
@@ -231,7 +234,7 @@ export default function AdminDiscountsPage() {
             className={styles.dateInput}
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
+            min={formatDateLocal(new Date())}
           />
         </div>
         <button className={styles.primaryButton} onClick={handleRefreshAll} disabled={refreshing}>

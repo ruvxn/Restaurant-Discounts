@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getAdminSessionFromRequest } from '@/lib/admin-auth';
+import { todayYMD } from '@/src/lib/time';
 
 const prisma = new PrismaClient();
 
@@ -33,7 +34,9 @@ export async function GET(req: NextRequest) {
     if (dateParam) {
       targetDate = dateParam;
     } else {
-      targetDate = new Date().toISOString().split('T')[0];
+      // OLD: targetDate = new Date().toISOString().split('T')[0];
+      // NEW: Use todayYMD() to get local date without timezone conversion issues
+      targetDate = todayYMD();
     }
 
     // Create date range for the entire day (noon to noon covers full day in any timezone)

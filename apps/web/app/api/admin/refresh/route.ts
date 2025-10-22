@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         restaurant_slug: r.slug,
         date,
         opening_hours: openingHoursToList(r),
-        // optional enrichment (safe to omit)
+        // optional enrichment 
         // @ts-ignore
         context: {
           total_seats: r.totalSeats,

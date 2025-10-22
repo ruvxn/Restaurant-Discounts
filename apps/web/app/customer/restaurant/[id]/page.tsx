@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import SeatingSelector from "@/components/SeatingSelector";
 import type { Table as SeatingSelectorTable } from "@/components/SeatingSelector";
+import { getEarliestBookableDate, formatDateLocal } from "@/src/lib/time";
 import styles from "../Restaurant.module.css";
 
 type MenuItem = {
@@ -57,7 +58,9 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // OLD: const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // NEW: Initialize with earliest bookable date (always today, allowing booking before opening hours)
+  const [selectedDate, setSelectedDate] = useState<Date>(getEarliestBookableDate());
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -157,7 +160,9 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
     async function fetchCapacity() {
       setLoadingCapacity(true);
       try {
-        const dateParam = selectedDate.toISOString().split('T')[0];
+        // OLD: const dateParam = selectedDate.toISOString().split('T')[0];
+        // NEW: Use formatDateLocal to avoid timezone conversion issues
+        const dateParam = formatDateLocal(selectedDate);
         const response = await fetch(
           `/api/restaurants/${resolvedParams.id}/capacity?date=${dateParam}&hour=${selectedSlot.hour}`,
           { cache: 'no-store' }
@@ -209,7 +214,9 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
     return formatPrice(discounted);
   };
 
-  const selectedDateValue = selectedDate.toISOString().split("T")[0];
+  // OLD: const selectedDateValue = selectedDate.toISOString().split("T")[0];
+  // NEW: Use formatDateLocal to avoid timezone conversion issues
+  const selectedDateValue = formatDateLocal(selectedDate);
 
   const setMenuItems = restaurant?.menuItems.filter(item => item.isSetMenu) || [];
 
@@ -433,6 +440,7 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
                   className={styles.dateInput}
                   value={selectedDateValue}
                   onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                  min={formatDateLocal(getEarliestBookableDate())}
                 />
               </div>
 
@@ -637,7 +645,7 @@ export default function RestaurantDetail({ params }: { params: Promise<{ id: str
                   ) : capacityTables.length > 0 ? (
                     <SeatingSelector
                       restaurantId={Number(resolvedParams.id)}
-                      date={selectedDate.toISOString().split('T')[0]}
+                      date={formatDateLocal(selectedDate)}
                       hour={selectedSlot.hour}
                       tables={capacityTables}
                       selectedTableId={selectedTable?.id}

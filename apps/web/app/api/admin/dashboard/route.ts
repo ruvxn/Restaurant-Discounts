@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getAdminSessionFromRequest } from '@/lib/admin-auth';
+import { formatDateLocal } from '@/src/lib/time';
 
 const prisma = new PrismaClient();
 
@@ -86,7 +87,9 @@ export async function GET(req: NextRequest) {
 
     // Group by date
     const bookingsByDate = upcomingBookings.reduce((acc: any, booking) => {
-      const dateKey = booking.startsAt.toISOString().split('T')[0];
+      // OLD: const dateKey = booking.startsAt.toISOString().split('T')[0];
+      // NEW: Use formatDateLocal to avoid timezone conversion issues
+      const dateKey = formatDateLocal(new Date(booking.startsAt));
       if (!acc[dateKey]) {
         acc[dateKey] = { count: 0, guests: 0 };
       }

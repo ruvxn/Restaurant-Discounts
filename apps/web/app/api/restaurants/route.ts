@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
+import { todayYMD } from "@/src/lib/time";
 
 export async function GET() {
   try {
@@ -23,7 +24,9 @@ export async function GET() {
     });
 
     // Get today's date range for discount lookup
-    const today = new Date().toISOString().split('T')[0];
+    // OLD: const today = new Date().toISOString().split('T')[0];
+    // NEW: Use todayYMD() to get local date without timezone conversion issues
+    const today = todayYMD();
     const dateStart = new Date(today + 'T00:00:00Z');
     const dateEnd = new Date(today + 'T23:59:59Z');
 

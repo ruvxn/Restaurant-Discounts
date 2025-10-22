@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getAdminSessionFromRequest } from '@/lib/admin-auth';
+import { todayYMD, formatDateLocal } from '@/src/lib/time';
 
 const prisma = new PrismaClient();
 
@@ -38,7 +39,9 @@ export async function POST(req: NextRequest) {
       // Use UTC noon for date to ensure it stays on correct calendar day
       start = new Date(startDate + 'T12:00:00Z');
     } else {
-      const today = new Date().toISOString().split('T')[0];
+      // OLD: const today = new Date().toISOString().split('T')[0];
+      // NEW: Use todayYMD() to get local date without timezone conversion issues
+      const today = todayYMD();
       start = new Date(today + 'T12:00:00Z');
     }
 
@@ -73,7 +76,9 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < days; i++) {
       const currentDate = new Date(start);
       currentDate.setDate(currentDate.getDate() + i);
-      const dateStr = currentDate.toISOString().split('T')[0];
+      // OLD: const dateStr = currentDate.toISOString().split('T')[0];
+      // NEW: Use formatDateLocal to avoid timezone conversion issues
+      const dateStr = formatDateLocal(currentDate);
 
       console.log('[refresh-discounts] Processing date:', dateStr);
 

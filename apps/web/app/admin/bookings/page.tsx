@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { formatDateLocal } from '@/src/lib/time';
 import styles from './AdminBookings.module.css';
 
 interface BookingItem {
@@ -234,7 +235,9 @@ export default function AdminBookingsPage() {
 
   const openModifyModal = (booking: Booking) => {
     setBookingToModify(booking);
-    const dateStr = new Date(booking.startsAt).toISOString().split('T')[0];
+    // OLD: const dateStr = new Date(booking.startsAt).toISOString().split('T')[0];
+    // NEW: Use formatDateLocal to avoid timezone conversion issues
+    const dateStr = formatDateLocal(new Date(booking.startsAt));
     const hour = new Date(booking.startsAt).getHours();
 
     setBookingDate(dateStr);
@@ -329,7 +332,9 @@ export default function AdminBookingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+    // OLD: a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+    // NEW: Use formatDateLocal to avoid timezone conversion issues
+    a.download = `bookings-${formatDateLocal(new Date())}.csv`;
     a.click();
   };
 
@@ -555,7 +560,7 @@ export default function AdminBookingsPage() {
                     type="date"
                     value={bookingDate}
                     onChange={(e) => setBookingDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={formatDateLocal(new Date())}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -758,7 +763,7 @@ export default function AdminBookingsPage() {
                     type="date"
                     value={bookingDate}
                     onChange={(e) => setBookingDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={formatDateLocal(new Date())}
                   />
                 </div>
                 <div className={styles.formGroup}>

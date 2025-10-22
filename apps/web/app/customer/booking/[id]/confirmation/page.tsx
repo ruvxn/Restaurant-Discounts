@@ -6,6 +6,7 @@ import CustomerNav from '@/components/CustomerNav';
 import MenuItemSelector from '@/components/MenuItemSelector';
 import { LoadingSpinner } from '@/components/ErrorBoundary';
 import { toast } from 'sonner';
+import { formatDateLocal } from '@/src/lib/time';
 import styles from '../Confirmation.module.css';
 
 interface BookingItemSummary {
@@ -182,7 +183,9 @@ interface SelectedItemState {
   notes?: string;
 }
 
-const getDateParam = (date: Date) => date.toISOString().split('T')[0];
+// OLD: const getDateParam = (date: Date) => date.toISOString().split('T')[0];
+// NEW: Use formatDateLocal to avoid timezone conversion issues
+const getDateParam = (date: Date) => formatDateLocal(date);
 
 function ModifyBookingModal({ booking, onClose, onUpdated }: ModifyBookingModalProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
