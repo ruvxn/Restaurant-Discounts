@@ -37,6 +37,7 @@ This platform revolutionizes restaurant revenue management by combining a modern
 ### For Customers
 
 #### Booking Experience
+
 - **Smart Restaurant Discovery**: Browse restaurants with real-time discount visibility
 - **Instant Availability**: Real-time table availability checking across all time slots
 - **Discount Transparency**: See exact discount percentages before booking
@@ -45,6 +46,7 @@ This platform revolutionizes restaurant revenue management by combining a modern
 - **Pre-ordering**: Select menu items during booking for streamlined dining
 
 #### Account Management
+
 - **Profile Customization**: Manage personal information and preferences
 - **Interest Tracking**: Share interests for enhanced social dining experiences
 - **Birthday Benefits**: Automatic birthday discount eligibility
@@ -53,12 +55,14 @@ This platform revolutionizes restaurant revenue management by combining a modern
 ### For Restaurant Admins
 
 #### Dashboard & Analytics
+
 - **Real-time Metrics**: Today's bookings, revenue, and occupancy at a glance
 - **7-Day Forecast**: Upcoming bookings with revenue projections
 - **Popular Time Slots**: Data-driven insights into peak demand periods
 - **Performance Tracking**: Total bookings, completion rates, and customer statistics
 
 #### Booking Management
+
 - **Comprehensive View**: Filter bookings by date, status (upcoming/past/all), and booking status (booked/cancelled/completed)
 - **Quick Actions**: Create, modify, and cancel bookings directly from dashboard
 - **Customer Insights**: Access customer information and booking history
@@ -66,6 +70,7 @@ This platform revolutionizes restaurant revenue management by combining a modern
 - **Manual Booking Creation**: Create bookings on behalf of customers with automatic table assignment
 
 #### Discount Management
+
 - **ML-Powered Recommendations**: One-click generation of AI-optimized discount schedules
 - **Manual Override**: Adjust individual discount percentages (5-50%) with reason tracking
 - **Batch Updates**: Modify multiple time slots simultaneously
@@ -73,6 +78,7 @@ This platform revolutionizes restaurant revenue management by combining a modern
 - **Date Range Control**: Generate discounts for 1-7 days ahead
 
 #### Operations
+
 - **Menu Management**: Create, update, and categorize menu items with dietary tags
 - **Table Configuration**: Manage seating capacity and table assignments
 - **Availability Monitoring**: Real-time capacity tracking across all tables
@@ -81,18 +87,21 @@ This platform revolutionizes restaurant revenue management by combining a modern
 ### ML-Powered Discount System
 
 #### Prediction Capabilities
+
 - **7-Day Advance Forecast**: Predict demand for each hour, 7 days ahead
 - **Restaurant-Specific Models**: Separate trained models per restaurant for personalized accuracy
 - **Multi-Factor Analysis**: Considers day of week, hour, weather patterns, holidays, and historical booking data
 - **Hourly Granularity**: Predictions for every operating hour (e.g., 8 AM to 10 PM)
 
 #### Model Architecture
+
 - **Algorithm**: Histogram Gradient Boosting Regression (HGBR) from scikit-learn
 - **Training Data**: Historical bookings, seasonal patterns, and external factors
 - **Features**: Temporal (day, hour, month), categorical (day of week), numerical (past occupancy rates)
 - **Output**: Demand score (0-100) mapped to discount percentage (0-30%)
 
 #### Discount Strategy
+
 - **Low Demand (0-30%)**: 25-30% discount to maximize fill rate
 - **Medium Demand (30-60%)**: 15-20% discount to boost occupancy
 - **High Demand (60-80%)**: 5-10% discount to maintain slight incentive
@@ -161,6 +170,7 @@ This platform revolutionizes restaurant revenue management by combining a modern
 ### Request Flow Examples
 
 #### Customer Booking Flow
+
 1. User selects restaurant, date, time, party size
 2. Frontend calls `GET /api/restaurants/[id]/capacity?date=...&hour=...`
 3. API queries database for existing bookings and table configurations
@@ -173,6 +183,7 @@ This platform revolutionizes restaurant revenue management by combining a modern
 10. Response includes confirmation with savings breakdown
 
 #### Admin Discount Generation Flow
+
 1. Admin clicks "Refresh Discounts" in dashboard
 2. Frontend calls `POST /api/admin/refresh-discounts` with date range
 3. API authenticates admin, retrieves restaurant details
@@ -189,42 +200,42 @@ This platform revolutionizes restaurant revenue management by combining a modern
 
 ### Frontend & Backend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js** | 15.5.2 | Full-stack React framework with App Router |
-| **React** | 19.1.0 | UI component library |
-| **TypeScript** | 5.x | Type-safe JavaScript |
-| **Tailwind CSS** | 4.x | Utility-first CSS framework |
-| **Prisma** | 6.15.0 | Database ORM and migration tool |
-| **PostgreSQL** | 16 | Relational database |
-| **bcryptjs** | 3.0.2 | Password hashing |
-| **Zod** | 3.23.8 | Schema validation |
-| **Sonner** | 1.5.0 | Toast notifications |
-| **React Icons** | 5.5.0 | Icon library |
+| Technology       | Version | Purpose                                    |
+| ---------------- | ------- | ------------------------------------------ |
+| **Next.js**      | 15.5.2  | Full-stack React framework with App Router |
+| **React**        | 19.1.0  | UI component library                       |
+| **TypeScript**   | 5.x     | Type-safe JavaScript                       |
+| **Tailwind CSS** | 4.x     | Utility-first CSS framework                |
+| **Prisma**       | 6.15.0  | Database ORM and migration tool            |
+| **PostgreSQL**   | 16      | Relational database                        |
+| **bcryptjs**     | 3.0.2   | Password hashing                           |
+| **Zod**          | 3.23.8  | Schema validation                          |
+| **Sonner**       | 1.5.0   | Toast notifications                        |
+| **React Icons**  | 5.5.0   | Icon library                               |
 
 ### Machine Learning Service
 
-| Technology | Purpose |
-|------------|---------|
-| **Python** | 3.11+ runtime |
-| **FastAPI** | Modern async API framework |
-| **scikit-learn** | ML models (HGBR, preprocessing) |
-| **pandas** | Data manipulation and analysis |
-| **numpy** | Numerical computing |
-| **joblib** | Model serialization/deserialization |
-| **XGBoost** | Alternative gradient boosting library |
-| **uvicorn** | ASGI server for FastAPI |
+| Technology       | Purpose                               |
+| ---------------- | ------------------------------------- |
+| **Python**       | 3.11+ runtime                         |
+| **FastAPI**      | Modern async API framework            |
+| **scikit-learn** | ML models (HGBR, preprocessing)       |
+| **pandas**       | Data manipulation and analysis        |
+| **numpy**        | Numerical computing                   |
+| **joblib**       | Model serialization/deserialization   |
+| **XGBoost**      | Alternative gradient boosting library |
+| **uvicorn**      | ASGI server for FastAPI               |
 
 ### Infrastructure & DevOps
 
-| Technology | Purpose |
-|------------|---------|
-| **Docker** | Containerization |
+| Technology         | Purpose                       |
+| ------------------ | ----------------------------- |
+| **Docker**         | Containerization              |
 | **Docker Compose** | Multi-container orchestration |
-| **Node.js** | JavaScript runtime (v20+) |
-| **npm** | Package management |
-| **ESLint** | Code linting |
-| **Git** | Version control |
+| **Node.js**        | JavaScript runtime (v20+)     |
+| **npm**            | Package management            |
+| **ESLint**         | Code linting                  |
+| **Git**            | Version control               |
 
 ## Project Structure
 
@@ -545,6 +556,7 @@ docker-compose up
 ```
 
 **First-time setup** takes 2-5 minutes. Docker will:
+
 1. Pull base images (Node.js 20, Python 3.11, PostgreSQL 16)
 2. Install dependencies for web app and ML service
 3. Run database migrations
@@ -552,27 +564,28 @@ docker-compose up
 5. Start development servers
 
 **Console output will show**:
+
 - PostgreSQL ready on port 5432
 - Next.js dev server ready on port 3000
 - Python FastAPI ready on port 8000
 
 #### 3. Access the Application
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| **Frontend** | [http://localhost:3000](http://localhost:3000) | Customer restaurant browsing |
-| **Admin Dashboard** | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) | Admin panel |
-| **ML API Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | FastAPI Swagger UI |
-| **PostgreSQL** | `localhost:5432` | Database connection |
+| Service             | URL                                                                    | Description                  |
+| ------------------- | ---------------------------------------------------------------------- | ---------------------------- |
+| **Frontend**        | [http://localhost:3000](http://localhost:3000)                         | Customer restaurant browsing |
+| **Admin Dashboard** | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) | Admin panel                  |
+| **ML API Docs**     | [http://localhost:8000/docs](http://localhost:8000/docs)               | FastAPI Swagger UI           |
+| **PostgreSQL**      | `localhost:5432`                                                       | Database connection          |
 
 #### 4. Login with Sample Accounts
 
 **Admin Accounts** (for all restaurants):
 
-| Restaurant | Email | Password |
-|------------|-------|----------|
-| Sushi House | admin@sushihouse.com | admin123 |
-| Pasta Place | admin@pastaplace.com | admin123 |
+| Restaurant   | Email                 | Password |
+| ------------ | --------------------- | -------- |
+| Sushi House  | admin@sushihouse.com  | admin123 |
+| Pasta Place  | admin@pastaplace.com  | admin123 |
 | Sunset Grill | admin@sunsetgrill.com | admin123 |
 
 **Customer Accounts**: Create via signup at [http://localhost:3000/signup](http://localhost:3000/signup)
@@ -616,6 +629,7 @@ docker-compose exec model-server bash
 ### Manual Setup (Without Docker)
 
 If you prefer local development without Docker, see [SETUP.md](SETUP.md) for detailed instructions covering:
+
 - PostgreSQL installation and configuration
 - Node.js and npm setup
 - Python virtual environment creation
@@ -766,20 +780,32 @@ Response: {
 
 ```typescript
 // Get dashboard metrics
-GET /api/admin/dashboard
+GET / api / admin / dashboard;
 Response: {
   today: {
-    totalBookings, totalRevenue, totalSavings,
-    totalGuests, occupancyRate, averagePartySize
+    totalBookings,
+      totalRevenue,
+      totalSavings,
+      totalGuests,
+      occupancyRate,
+      averagePartySize;
   }
-  upcoming: { // Next 7 days
-    totalBookings, totalRevenue, totalSavings,
-    totalGuests, bookingsToday, bookingsTomorrow
+  upcoming: {
+    // Next 7 days
+    totalBookings,
+      totalRevenue,
+      totalSavings,
+      totalGuests,
+      bookingsToday,
+      bookingsTomorrow;
   }
-  popularTimeSlots: [{ hour, bookingCount, totalGuests, totalRevenue }]
+  popularTimeSlots: [{ hour, bookingCount, totalGuests, totalRevenue }];
   stats: {
-    totalTables, totalSeats, totalBookings,
-    completedBookings, cancelledBookings
+    totalTables,
+      totalSeats,
+      totalBookings,
+      completedBookings,
+      cancelledBookings;
   }
 }
 ```
@@ -902,14 +928,14 @@ curl -X POST http://localhost:3000/api/admin/refresh-discounts \
 
 ```typescript
 // apps/web/app/api/admin/refresh-discounts/route.ts
-const response = await fetch('http://model-server:8000/v1/generate', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("http://model-server:8000/v1/generate", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     restaurant_id: 1,
-    start_date: '2025-10-25',
-    days_ahead: 7
-  })
+    start_date: "2025-10-25",
+    days_ahead: 7,
+  }),
 });
 
 const predictions = await response.json();
@@ -979,16 +1005,16 @@ def map_demand_to_discount(demand: float) -> int:
 ```typescript
 // Next.js saves predictions to database
 await prisma.acceptedDiscount.deleteMany({
-  where: { restaurantId, date }
+  where: { restaurantId, date },
 });
 
 await prisma.acceptedDiscount.createMany({
-  data: predictions.map(p => ({
+  data: predictions.map((p) => ({
     restaurantId,
-    date: new Date(p.date + 'T00:00:00Z'),
+    date: new Date(p.date + "T00:00:00Z"),
     time: p.time,
-    discount: p.recommended_discount
-  }))
+    discount: p.recommended_discount,
+  })),
 });
 ```
 
@@ -1002,6 +1028,7 @@ await prisma.acceptedDiscount.createMany({
 ### Retraining Schedule
 
 Models should be retrained monthly or when:
+
 - Significant booking pattern changes detected
 - New holidays/events added
 - Seasonal transitions occur
@@ -1128,6 +1155,7 @@ The seed script (`apps/web/prisma/seed.mjs`) creates:
 #### Restaurants (3)
 
 1. **Sushi House**
+
    - Slug: `sushi-house`
    - Hours: 11 AM - 10 PM
    - Total Seats: 120
@@ -1136,6 +1164,7 @@ The seed script (`apps/web/prisma/seed.mjs`) creates:
    - 25 menu items
 
 2. **Pasta Place**
+
    - Slug: `pasta-place`
    - Hours: 10 AM - 11 PM
    - Total Seats: 100
@@ -1154,6 +1183,7 @@ The seed script (`apps/web/prisma/seed.mjs`) creates:
 #### Menu Items
 
 Each restaurant has diverse menu with:
+
 - Appetizers (3-5 items)
 - Main Courses (10-15 items)
 - Desserts (3-5 items)
@@ -1318,6 +1348,7 @@ docker-compose exec web npm start
 ```
 
 Production optimizations:
+
 - Static page generation where possible
 - Image optimization via next/image
 - API route caching with ISR (Incremental Static Regeneration)
@@ -1365,7 +1396,7 @@ gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:8000
 
 ```yaml
 # docker-compose.prod.yml
-version: '3.8'
+version: "3.8"
 services:
   web:
     build:
@@ -1385,6 +1416,7 @@ services:
 ```
 
 Deploy to:
+
 - **AWS ECS/Fargate**: Container orchestration
 - **Google Cloud Run**: Serverless containers
 - **DigitalOcean App Platform**: Managed containers
@@ -1400,20 +1432,20 @@ Deploy to:
 
 ### Available Guides
 
-| Document | Description |
-|----------|-------------|
-| [README.md](README.md) | This file - complete project overview |
-| [API_ENDPOINTS.md](API_ENDPOINTS.md) | Detailed API reference with request/response examples |
-| [DB_SCHEMA.md](DB_SCHEMA.md) | Database schema with ERD diagram and constraints |
-| [DOCKER_SETUP.md](DOCKER_SETUP.md) | Docker installation and configuration guide |
-| [SETUP.md](SETUP.md) | Manual setup without Docker (local development) |
-| [BOOKING_SYSTEM_SUMMARY.md](BOOKING_SYSTEM_SUMMARY.md) | Booking architecture and business logic |
-| [TABLE_BOOKING_RULES.md](TABLE_BOOKING_RULES.md) | Table assignment algorithm explanation |
-| [TABLE_SHARING_RULES.md](TABLE_SHARING_RULES.md) | Capacity sharing mechanics |
-| [CAPACITY_API_GUIDE.md](CAPACITY_API_GUIDE.md) | Availability checking implementation |
-| [ADMIN_DASHBOARD_SUMMARY.md](ADMIN_DASHBOARD_SUMMARY.md) | Admin features and workflows |
-| [ADMIN_BOOKING_OPERATIONS.md](ADMIN_BOOKING_OPERATIONS.md) | Admin booking management guide |
-| [BOOKING_STATUS_BEHAVIOR.md](BOOKING_STATUS_BEHAVIOR.md) | Status lifecycle (BOOKED → COMPLETED/CANCELLED) |
+| Document                                                   | Description                                           |
+| ---------------------------------------------------------- | ----------------------------------------------------- |
+| [README.md](README.md)                                     | This file - complete project overview                 |
+| [API_ENDPOINTS.md](API_ENDPOINTS.md)                       | Detailed API reference with request/response examples |
+| [DB_SCHEMA.md](DB_SCHEMA.md)                               | Database schema with ERD diagram and constraints      |
+| [DOCKER_SETUP.md](DOCKER_SETUP.md)                         | Docker installation and configuration guide           |
+| [SETUP.md](SETUP.md)                                       | Manual setup without Docker (local development)       |
+| [BOOKING_SYSTEM_SUMMARY.md](BOOKING_SYSTEM_SUMMARY.md)     | Booking architecture and business logic               |
+| [TABLE_BOOKING_RULES.md](TABLE_BOOKING_RULES.md)           | Table assignment algorithm explanation                |
+| [TABLE_SHARING_RULES.md](TABLE_SHARING_RULES.md)           | Capacity sharing mechanics                            |
+| [CAPACITY_API_GUIDE.md](CAPACITY_API_GUIDE.md)             | Availability checking implementation                  |
+| [ADMIN_DASHBOARD_SUMMARY.md](ADMIN_DASHBOARD_SUMMARY.md)   | Admin features and workflows                          |
+| [ADMIN_BOOKING_OPERATIONS.md](ADMIN_BOOKING_OPERATIONS.md) | Admin booking management guide                        |
+| [BOOKING_STATUS_BEHAVIOR.md](BOOKING_STATUS_BEHAVIOR.md)   | Status lifecycle (BOOKED → COMPLETED/CANCELLED)       |
 
 ### Code Documentation
 
@@ -1436,7 +1468,7 @@ Deploy to:
 services:
   web:
     ports:
-      - "3001:3000"  # External:Internal (change external port)
+      - "3001:3000" # External:Internal (change external port)
 ```
 
 Then access at `http://localhost:3001`.
@@ -1448,12 +1480,14 @@ Then access at `http://localhost:3001`.
 **Solutions**:
 
 1. Ensure PostgreSQL is running:
+
    ```bash
    docker-compose ps
    # Should show postgres with "Up" status
    ```
 
 2. Check DATABASE_URL in environment variables:
+
    ```bash
    docker-compose exec web printenv DATABASE_URL
    ```
@@ -1482,11 +1516,13 @@ docker-compose exec web npx prisma migrate reset
 **Solutions**:
 
 1. Check logs for error details:
+
    ```bash
    docker-compose logs model-server
    ```
 
 2. Verify requirements.txt is valid:
+
    ```bash
    docker-compose exec model-server pip list
    ```
@@ -1507,6 +1543,7 @@ docker-compose exec web npx prisma migrate reset
 **Solutions**:
 
 1. **Next.js**: Clear `.next` cache:
+
    ```bash
    docker-compose exec web rm -rf .next
    docker-compose restart web
@@ -1535,6 +1572,7 @@ docker-compose exec web npx prisma migrate reset
 **Solutions**:
 
 1. Clear Docker cache:
+
    ```bash
    docker-compose down
    docker system prune -a
@@ -1548,6 +1586,7 @@ docker-compose exec web npx prisma migrate reset
 #### Slow Initial Load
 
 First-time setup is slow (2-5 min) due to:
+
 - Downloading base images (~2GB)
 - Installing npm packages (~500MB)
 - Installing Python packages (~200MB)
@@ -1558,11 +1597,12 @@ First-time setup is slow (2-5 min) due to:
 #### Slow API Responses
 
 1. **Database queries**: Check Prisma query logs:
+
    ```typescript
    // In apps/web/src/lib/prisma.ts
    const prisma = new PrismaClient({
-     log: ['query', 'info', 'warn', 'error']
-   })
+     log: ["query", "info", "warn", "error"],
+   });
    ```
 
 2. **Missing indexes**: Verify indexes in schema.prisma match query patterns
@@ -1576,28 +1616,10 @@ First-time setup is slow (2-5 min) due to:
 3. **Documentation**: Review guides in [Documentation](#documentation)
 4. **Database inspection**: Use `psql` to query database directly
 
-## License
-
-This project is for educational and demonstration purposes. Feel free to use as a learning resource or foundation for your own restaurant management system.
-
-## Contributing
-
-Contributions welcome! Planned improvements:
-
-- [ ] Automated testing suite (Jest, Playwright)
-- [ ] Real-time booking updates (WebSockets)
-- [ ] Email notifications (booking confirmations, reminders)
-- [ ] SMS reminders via Twilio
-- [ ] Multi-restaurant group bookings
-- [ ] Customer loyalty program integration
-- [ ] Advanced analytics dashboard
-- [ ] Mobile app (React Native)
-- [ ] Weather API integration for better predictions
-- [ ] Holiday calendar integration
-
 ## Acknowledgments
 
 Built as a demonstration of:
+
 - Full-stack TypeScript development with Next.js 15
 - Machine learning integration with Python
 - Modern database design with Prisma
@@ -1610,4 +1632,4 @@ Built as a demonstration of:
 
 **Last Updated**: October 2025
 **Version**: 1.0.0
-**Maintained By**: Restaurant Discounts Team
+**Maintained By**: Minimising Restaurant Empty Tables
