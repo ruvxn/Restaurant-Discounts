@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { GoHeart, GoHeartFill } from "react-icons/go";
 import styles from "./Home.module.css";
 import CustomerNav from "@/components/CustomerNav";
+import MapSection from "@/components/MapSection";
+import RegisterRestaurantCTA from "@/components/RegisterRestaurantCTA";
 
 type Restaurant = {
   id: string;
@@ -144,13 +146,48 @@ export default function Home() {
                     {r.distanceKm && <span>{r.distanceKm.toFixed(1)} km away</span>}
                   </div>
                   {r.googleRating && (
-                    <span className={styles.rating}>⭐ {r.googleRating.toFixed(1)}</span>
+                    <div className={styles.rating}>
+                      <div className={styles.stars}>
+                        {[...Array(5)].map((_, i) => {
+                          const fillPercentage = Math.min(Math.max(r.googleRating! - i, 0), 1) * 100;
+                          return (
+                            <div key={i} className={styles.starWrapper}>
+                              <svg
+                                className={styles.starEmpty}
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                              <svg
+                                className={styles.starFilled}
+                                style={{ clipPath: `inset(0 ${100 - fillPercentage}% 0 0)` }}
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <span className={styles.ratingValue}>{r.googleRating.toFixed(1)}</span>
+                    </div>
                   )}
                 </div>
               </article>
             ))}
           </section>
         </div>
+
+        <MapSection />
+        <RegisterRestaurantCTA />
       </main>
     </>
   );

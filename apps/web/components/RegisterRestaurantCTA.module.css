@@ -1,0 +1,343 @@
+.ctaSection {
+  width: 100%;
+  padding: 80px 0;
+  background: linear-gradient(180deg, #ffe8db 0%, #fff6f0 100%);
+}
+
+.ctaContent {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 0 clamp(24px, 6vw, 64px);
+}
+
+.ctaGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.ctaText {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.ctaTitle {
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.ctaSubtitle {
+  font-size: 1.15rem;
+  color: #a04b2a;
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+.benefitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.benefit {
+  display: flex;
+  gap: 16px;
+  align-items: start;
+}
+
+.benefitIcon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  border-radius: 10px;
+  color: #fff7f2;
+}
+
+.benefitTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2a1209;
+  margin: 0 0 4px 0;
+}
+
+.benefitDesc {
+  font-size: 0.9rem;
+  color: #b9603b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ctaButton {
+  align-self: flex-start;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  color: #fff7f2;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 16px 32px -20px rgba(255, 112, 67, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -20px rgba(255, 112, 67, 0.7);
+}
+
+.ctaVisual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statsCard {
+  width: 100%;
+  padding: 40px 32px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 143, 102, 0.22);
+  box-shadow: 0 26px 48px -32px rgba(255, 112, 67, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: #b9603b;
+  font-weight: 500;
+}
+
+.statDivider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 143, 102, 0.3), transparent);
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  position: relative;
+  width: min(580px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 32px 64px -24px rgba(255, 112, 67, 0.4);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 143, 102, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: #a04b2a;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.modalClose:hover {
+  background: rgba(255, 143, 102, 0.2);
+}
+
+.modalTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.modalSubtitle {
+  font-size: 1rem;
+  color: #a04b2a;
+  margin: 0 0 32px 0;
+}
+
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2a1209;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 143, 102, 0.22);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #2a1209;
+  transition: border-color 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #ff7043;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.submitButton {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #ff8a5c, #ff7043);
+  color: #fff7f2;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 24px -16px rgba(255, 112, 67, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 8px;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -16px rgba(255, 112, 67, 0.7);
+}
+
+.successMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.successMessage svg {
+  color: #10b981;
+}
+
+.successMessage h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.successMessage p {
+  font-size: 1rem;
+  color: #a04b2a;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .ctaGrid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .statsCard {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .ctaSection {
+    padding: 56px 0;
+  }
+
+  .modal {
+    padding: 32px 24px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .statsCard {
+    padding: 32px 24px;
+  }
+
+  .statNumber {
+    font-size: 2rem;
+  }
+}
