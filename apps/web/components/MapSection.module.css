@@ -2,6 +2,8 @@
   width: 100%;
   padding: 64px 0;
   background: linear-gradient(180deg, #fff6f0 0%, #ffe8db 100%);
+  position: relative;
+  z-index: 1;
 }
 
 .mapContent {
@@ -45,6 +47,14 @@
   overflow: hidden;
   border: 2px solid rgba(255, 143, 102, 0.3);
   box-shadow: 0 20px 40px -24px rgba(255, 112, 67, 0.3);
+  z-index: 1;
+}
+
+/* Override Leaflet's default z-index */
+.mapPlaceholder :global(.leaflet-pane),
+.mapPlaceholder :global(.leaflet-top),
+.mapPlaceholder :global(.leaflet-bottom) {
+  z-index: auto !important;
 }
 
 .mapOverlay {
@@ -153,6 +163,31 @@
   .mapPlaceholder {
     height: 300px;
   }
+}
+
+/* Force all Leaflet map elements to stay within stacking context */
+.mapPlaceholder :global(.leaflet-container) {
+  z-index: 1 !important;
+}
+
+.mapPlaceholder :global(.leaflet-tile-pane) {
+  z-index: 1 !important;
+}
+
+.mapPlaceholder :global(.leaflet-overlay-pane) {
+  z-index: 2 !important;
+}
+
+.mapPlaceholder :global(.leaflet-marker-pane) {
+  z-index: 3 !important;
+}
+
+.mapPlaceholder :global(.leaflet-tooltip-pane) {
+  z-index: 4 !important;
+}
+
+.mapPlaceholder :global(.leaflet-popup-pane) {
+  z-index: 5 !important;
 }
 
 @media (max-width: 640px) {
